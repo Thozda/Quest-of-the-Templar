@@ -16,22 +16,19 @@ AItem::AItem()
 void AItem::BeginPlay()
 {
 	Super::BeginPlay();
-
-	SetActorLocation(FVector(0.f, 0.f, 200.f));
-
-	UWorld* World = GetWorld();
-	FVector Location = GetActorLocation();
-	FVector Forward = GetActorForwardVector();
-
-	//DRAW_LINE(Location, Location + Forward * 100.0f);
-	DRAW_SPHERE(Location);
-	//DRAW_POINT(Location + Forward * 100.0f);
-	DRAW_VECTOR_ARROW(Location, Location + Forward * 100.0f);
 }
 
 // Called every frame
 void AItem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	float MovementRate = 70.f;
+	float RotationRate = 15.f;
+
+	AddActorWorldOffset(FVector(MovementRate, 0.f, 0.f) * DeltaTime);
+	AddActorWorldRotation(FRotator(RotationRate, 0.f, 0.f) * DeltaTime);
+	DRAW_SPHERE_SingleFrame(GetActorLocation());
+	DRAW_VECTOR_ARROW_SingleFrame(GetActorLocation(), GetActorLocation() + GetActorForwardVector() * 100.f);
 }
 
