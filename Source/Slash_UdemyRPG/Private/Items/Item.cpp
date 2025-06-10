@@ -10,6 +10,8 @@ AItem::AItem()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMeshComponent"));
+	RootComponent = ItemMesh;
 }
 
 // Called when the game starts or when spawned
@@ -18,17 +20,23 @@ void AItem::BeginPlay()
 	Super::BeginPlay();
 }
 
+float AItem::TransformedSin()
+{
+	return FMath::Sin(RunningTime * Frequency) * Amplitude;
+}
+
+float AItem::TransformedCos()
+{
+	return FMath::Cos(RunningTime * Frequency) * Amplitude;
+}
+
 // Called every frame
 void AItem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	float MovementRate = 70.f;
-	float RotationRate = 15.f;
+	RunningTime += DeltaTime;
 
-	AddActorWorldOffset(FVector(MovementRate, 0.f, 0.f) * DeltaTime);
-	AddActorWorldRotation(FRotator(RotationRate, 0.f, 0.f) * DeltaTime);
-	DRAW_SPHERE_SingleFrame(GetActorLocation());
-	DRAW_VECTOR_ARROW_SingleFrame(GetActorLocation(), GetActorLocation() + GetActorForwardVector() * 100.f);
+	//AddActorWorldRotation(FRotator(-180.f * DeltaTime, 0.f, 0.f));
 }
 
