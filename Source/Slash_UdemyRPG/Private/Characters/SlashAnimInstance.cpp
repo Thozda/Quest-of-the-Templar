@@ -24,5 +24,7 @@ void USlashAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	if (MovementComponent)
 	{
 		GroundSpeed = UKismetMathLibrary::VSizeXY(MovementComponent->Velocity);
+		IsFalling = MovementComponent->IsFalling();
+		CharacterState = Knight->GetCharacterState();
 	}
 }

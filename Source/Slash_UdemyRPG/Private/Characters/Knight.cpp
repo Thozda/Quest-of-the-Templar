@@ -8,6 +8,11 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Items/Item.h"
+#include "Items/Weapons/Weapon.h"
+#include "Animation/AnimMontage.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
 
 // Sets default values
 AKnight::AKnight()
@@ -55,6 +60,7 @@ void AKnight::Tick(float DeltaTime)
 
 void AKnight::Move(const FInputActionValue& Value)
 {
+	if (ActionState == EActionState::EAS_Attacking) return;
 	const FVector2D DirectionValue = Value.Get<FVector2D>();
 	if (GetController() && ((DirectionValue.X != 0.f) || (DirectionValue.Y != 0.f)))
 	{
@@ -77,6 +83,80 @@ void AKnight::Look(const FInputActionValue& Value)
 	AddControllerPitchInput(LookValue.Y);
 }
 
+void AKnight::Jump(const FInputActionValue& Value)
+{
+	ACharacter::Jump();
+	if (!FallingCheck())
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, ExertMetaSound, GetActorLocation());
+	}
+}
+
+bool AKnight::FallingCheck()
+{
+	return GetCharacterMovement()->IsFalling();
+}
+
+void AKnight::Equip(const FInputActionValue& Value)
+{
+	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
+	if (OverlappingWeapon)
+	{
+		OverlappingWeapon->Equip(GetMesh(), FName("RightHandSocket"));
+		CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
+	}
+}
+
+void AKnight::Attack(const FInputActionValue& Value)
+{
+	if (CanAttack())
+	{
+		ActionState = EActionState::EAS_Attacking;
+		PlayAttackMontage();
+	}
+}
+
+bool AKnight::CanAttack()
+{
+	return ActionState == EActionState::EAS_Unoccupied &&
+		CharacterState != ECharacterState::ECS_UnEquipped;
+}
+
+void AKnight::PlayAttackMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && AttackMontage)
+	{
+		AnimInstance->Montage_Play(AttackMontage);
+		const int32 Selection = FMath::RandRange(0, 3);
+		FName RandomAttack = FName();
+		switch (Selection)
+		{
+		case 0:
+			RandomAttack = FName("HorizontalAttack");
+			break;
+		case 1:
+			RandomAttack = FName("DownwardAttack");
+			break;
+		case 2:
+			RandomAttack = FName("UpwardAttack");
+			break;
+		case 3:
+			RandomAttack = FName("360Attack");
+			break;
+		default:
+			break;
+		}
+		AnimInstance->Montage_JumpToSection(RandomAttack, AttackMontage);
+	}
+}
+
+void AKnight::AttackEnd()
+{
+	ActionState = EActionState::EAS_Unoccupied;
+}
+
+
 
 // Called to bind functionality to input
 void AKnight::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -87,7 +167,9 @@ void AKnight::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	{
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AKnight::Move);
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AKnight::Look);
-
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AKnight::Jump);
+		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Triggered, this, &AKnight::Equip);
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &AKnight::Attack);
 	}
 }
 
