@@ -13,6 +13,7 @@
 #include "Animation/AnimMontage.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
+#include "Components/BoxComponent.h"
 
 // Sets default values
 AKnight::AKnight()
@@ -87,7 +88,7 @@ void AKnight::Jump(const FInputActionValue& Value)
 {
 	if (ActionState != EActionState::EAS_Unoccupied) return;
 	ACharacter::Jump();
-	if (!KnightIsFalling())
+	if (ExertMetaSound && !KnightIsFalling())
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, ExertMetaSound, GetActorLocation());
 	}
@@ -206,7 +207,7 @@ bool AKnight::CanAttack()
 		!KnightIsFalling();
 }
 
-void AKnight::PlayArmMontage(FName SelectionName)
+void AKnight::PlayArmMontage(const FName& SelectionName)
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && ArmMontage)
@@ -222,6 +223,13 @@ void AKnight::AttackEnd()
 }
 
 
+void AKnight::SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled)
+{
+	if (EquippedWeapon && EquippedWeapon->GetWeaponBox())
+	{
+		EquippedWeapon->GetWeaponBox()->SetCollisionEnabled(CollisionEnabled);
+	}
+}
 
 // Called to bind functionality to input
 void AKnight::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -237,4 +245,3 @@ void AKnight::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &AKnight::Attack);
 	}
 }
-
