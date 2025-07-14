@@ -8,6 +8,7 @@
 #include "Enemy.generated.h"
 
 class UAnimMontage;
+class UNiagaraSystem;
 
 UCLASS()
 class SLASH_UDEMYRPG_API AEnemy : public ACharacter, public IHitInterface
@@ -26,6 +27,8 @@ public:
 
 	virtual void GetHit(const FVector& ImpactPoint) override;
 
+	void DirectionalHitReact(const FVector& ImpactPoint);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -33,16 +36,29 @@ protected:
 	//
 	//Play Montage Functions
 	//
-
 	void PlayHitReactMontage(const FName& SelectionName);
+
+	//
+	//VFX
+	//
+	UPROPERTY(EditAnywhere, Category = VisualEffects)
+	UParticleSystem* HitParticles;
+
+	UPROPERTY(EditAnywhere, Category = VisualEffects)
+	UNiagaraSystem* NiagaraHitParticles;
 
 private:
 	//
 	//Animation Montages
 	//
-
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* HitReactMontage;
+
+	//
+	//SFX
+	//
+	UPROPERTY(EditAnywhere, Category = Sounds)
+	USoundBase* HitSound;
 
 public:	
 
