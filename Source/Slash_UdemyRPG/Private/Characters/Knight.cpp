@@ -13,6 +13,7 @@
 #include "Animation/AnimMontage.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
+#include "Components/BoxComponent.h"
 
 // Sets default values
 AKnight::AKnight()
@@ -60,7 +61,7 @@ void AKnight::Tick(float DeltaTime)
 
 void AKnight::Move(const FInputActionValue& Value)
 {
-	if (ActionState == EActionState::EAS_Attacking) return;
+	if (ActionState != EActionState::EAS_Unoccupied) return;
 	const FVector2D DirectionValue = Value.Get<FVector2D>();
 	if (GetController() && ((DirectionValue.X != 0.f) || (DirectionValue.Y != 0.f)))
 	{
@@ -85,14 +86,15 @@ void AKnight::Look(const FInputActionValue& Value)
 
 void AKnight::Jump(const FInputActionValue& Value)
 {
+	if (ActionState != EActionState::EAS_Unoccupied) return;
 	ACharacter::Jump();
-	if (!FallingCheck())
+	if (ExertMetaSound && !KnightIsFalling())
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, ExertMetaSound, GetActorLocation());
 	}
 }
 
-bool AKnight::FallingCheck()
+bool AKnight::KnightIsFalling()
 {
 	return GetCharacterMovement()->IsFalling();
 }
@@ -103,8 +105,61 @@ void AKnight::Equip(const FInputActionValue& Value)
 	if (OverlappingWeapon)
 	{
 		OverlappingWeapon->Equip(GetMesh(), FName("RightHandSocket"));
+		OverlappingItem = nullptr;
 		CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
+		EquippedWeapon = OverlappingWeapon;
 	}
+	else
+	{
+		if (CanDisarm())
+		{
+			PlayArmMontage(FName("Unequip"));
+			CharacterState = ECharacterState::ECS_UnEquipped;
+			ActionState = EActionState::EAS_EquippingWeapon;
+		}
+		else if (CanArm())
+		{
+			PlayArmMontage(FName("Equip"));
+			CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
+			ActionState = EActionState::EAS_EquippingWeapon;
+		}
+	}
+}
+
+bool AKnight::CanDisarm()
+{
+	return ActionState == EActionState::EAS_Unoccupied &&
+		CharacterState != ECharacterState::ECS_UnEquipped &&
+		!KnightIsFalling();
+}
+
+bool AKnight::CanArm()
+{
+	return ActionState == EActionState::EAS_Unoccupied &&
+		CharacterState == ECharacterState::ECS_UnEquipped &&
+		EquippedWeapon &&
+		!KnightIsFalling();
+}
+
+void AKnight::Disarm()
+{
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("SpineSocket"));
+	}
+}
+
+void AKnight::Arm()
+{
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("RightHandSocket"));
+	}
+}
+
+void AKnight::FinishedArming()
+{
+	ActionState = EActionState::EAS_Unoccupied;
 }
 
 void AKnight::Attack(const FInputActionValue& Value)
@@ -114,12 +169,6 @@ void AKnight::Attack(const FInputActionValue& Value)
 		ActionState = EActionState::EAS_Attacking;
 		PlayAttackMontage();
 	}
-}
-
-bool AKnight::CanAttack()
-{
-	return ActionState == EActionState::EAS_Unoccupied &&
-		CharacterState != ECharacterState::ECS_UnEquipped;
 }
 
 void AKnight::PlayAttackMontage()
@@ -151,12 +200,37 @@ void AKnight::PlayAttackMontage()
 	}
 }
 
+bool AKnight::CanAttack()
+{
+	return ActionState == EActionState::EAS_Unoccupied &&
+		CharacterState != ECharacterState::ECS_UnEquipped &&
+		!KnightIsFalling();
+}
+
+void AKnight::PlayArmMontage(const FName& SelectionName)
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ArmMontage)
+	{
+		AnimInstance->Montage_Play(ArmMontage);
+		AnimInstance->Montage_JumpToSection(SelectionName, ArmMontage);
+	}
+}
+
 void AKnight::AttackEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
 }
 
 
+void AKnight::SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled)
+{
+	if (EquippedWeapon && EquippedWeapon->GetWeaponBox())
+	{
+		EquippedWeapon->GetWeaponBox()->SetCollisionEnabled(CollisionEnabled);
+		EquippedWeapon->EmptyIgnoreActors();
+	}
+}
 
 // Called to bind functionality to input
 void AKnight::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -168,8 +242,7 @@ void AKnight::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AKnight::Move);
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AKnight::Look);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AKnight::Jump);
-		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Triggered, this, &AKnight::Equip);
-		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &AKnight::Attack);
+		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &AKnight::Equip);
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &AKnight::Attack);
 	}
 }
-

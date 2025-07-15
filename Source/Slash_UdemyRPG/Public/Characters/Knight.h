@@ -15,6 +15,7 @@ class UCameraComponent;
 class AItem;
 class UAnimMontage;
 class USoundBase;
+class AWeapon;
 
 UCLASS()
 class SLASH_UDEMYRPG_API AKnight : public ACharacter
@@ -30,6 +31,9 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	UFUNCTION(BlueprintCallable)
+	void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
 
 protected:
 	// Called when the game starts or when spawned
@@ -78,12 +82,25 @@ protected:
 	//
 
 	void PlayAttackMontage();
+	void PlayArmMontage(const FName& SelectionName);
 	
 	UFUNCTION(BlueprintCallable)
 	void AttackEnd();
 
 	bool CanAttack();
-	bool FallingCheck();
+	bool KnightIsFalling();
+
+	bool CanDisarm();
+	bool CanArm();
+
+	UFUNCTION(BlueprintCallable)
+	void Disarm();
+
+	UFUNCTION(BlueprintCallable)
+	void Arm();
+
+	UFUNCTION(BlueprintCallable)
+	void FinishedArming();
 
 private:
 	ECharacterState CharacterState = ECharacterState::ECS_UnEquipped;
@@ -97,12 +114,18 @@ private:
 	UPROPERTY(VisibleInstanceOnly)
 	AItem* OverlappingItem;
 
+	UPROPERTY(VisibleAnywhere, Category = Weapon)
+	AWeapon* EquippedWeapon;
+
 	//
 	//Animation Montages
 	//
-
+	
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* AttackMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* ArmMontage;
 
 public:
 	FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
