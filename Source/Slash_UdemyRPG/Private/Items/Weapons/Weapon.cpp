@@ -36,6 +36,9 @@ void AWeapon::BeginPlay()
 	WeaponBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxOverlap);
 }
 
+//
+//Equip
+//
 void AWeapon::Equip(USceneComponent* InParent, FName InSocket)
 {
 	AttachMeshToSocket(InParent, InSocket);
@@ -67,6 +70,9 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 	Super::OnSphereEndOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex);
 }
 
+//
+//Damage
+//
 void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	const FVector Start = BoxTraceStart->GetComponentLocation();
@@ -86,7 +92,9 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 
 	if (BoxHit.GetActor() && Cast<IHitInterface>(BoxHit.GetActor()))
 	{
-		Cast<IHitInterface>(BoxHit.GetActor())->GetHit(BoxHit.ImpactPoint);
+		Cast<IHitInterface>(BoxHit.GetActor())->Execute_GetHit(BoxHit.GetActor(), BoxHit.ImpactPoint);
 	}
 	IgnoreActors.AddUnique(BoxHit.GetActor());
+
+	CreateFields(BoxHit.ImpactPoint);
 }
