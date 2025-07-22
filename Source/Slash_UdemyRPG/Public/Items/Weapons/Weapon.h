@@ -20,10 +20,12 @@ class SLASH_UDEMYRPG_API AWeapon : public AItem
 public:
 	AWeapon();
 
+	virtual void Tick(float DeltaTime) override;
+
 	//
 	//Pickup
 	//
-	void Equip(USceneComponent* InParent, FName InSocket);
+	void Equip(USceneComponent* InParent, FName InSocket, AActor* NewOwner, APawn* NewInstigator);
 	void AttachMeshToSocket(USceneComponent* InParent, const FName& InSocket);
 protected:
 	virtual void BeginPlay() override;
@@ -55,6 +57,14 @@ private:
 	//
 	//Damage
 	//
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	float Damage = 20.f;
+
+	FHitResult BoxHit;
+
+	void WeaponBoxTrace();
+	void DealDamage();
+
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	UBoxComponent* WeaponBox;
 
@@ -66,7 +76,13 @@ private:
 
 	TArray<AActor*> IgnoreActors;
 
+	int hits = 0;
+
+	bool bCanDamage = false;
+
 public:
 	FORCEINLINE UBoxComponent* GetWeaponBox() const { return WeaponBox; }
 	FORCEINLINE void EmptyIgnoreActors() { IgnoreActors.Empty(); }
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE void SetCanDamage(bool state) { bCanDamage = state; }
 };

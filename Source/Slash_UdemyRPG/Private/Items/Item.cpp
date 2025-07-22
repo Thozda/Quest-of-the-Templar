@@ -5,6 +5,7 @@
 #include "Slash_UdemyRPG/DebugMacros.h"
 #include "Components/SphereComponent.h"
 #include "Characters/Knight.h"
+#include "NiagaraComponent.h"
 
 // Sets default values
 AItem::AItem()
@@ -19,6 +20,9 @@ AItem::AItem()
 	Sphere->SetupAttachment(GetRootComponent());
 	Sphere->SetSphereRadius(100.f);
 	Sphere->SetWorldLocation(FVector(0.f, 0.f, 50.f));
+
+	PickupEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Pickup Effect"));
+	PickupEffect->SetupAttachment(GetRootComponent());
 }
 
 // Called when the game starts or when spawned

@@ -104,7 +104,7 @@ void AKnight::Equip(const FInputActionValue& Value)
 	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
 	if (OverlappingWeapon)
 	{
-		OverlappingWeapon->Equip(GetMesh(), FName("RightHandSocket"));
+		OverlappingWeapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
 		OverlappingItem = nullptr;
 		CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
 		EquippedWeapon = OverlappingWeapon;
@@ -162,22 +162,62 @@ void AKnight::FinishedArming()
 	ActionState = EActionState::EAS_Unoccupied;
 }
 
-void AKnight::Attack(const FInputActionValue& Value)
+void AKnight::WeamponCanDamageTrue()
+{
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->SetCanDamage(true);
+	}
+}
+
+void AKnight::WeamponCanDamageFalse()
+{
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->SetCanDamage(false);
+	}
+}
+
+void AKnight::LightAttack(const FInputActionValue& Value)
 {
 	if (CanAttack())
 	{
 		ActionState = EActionState::EAS_Attacking;
-		PlayAttackMontage();
+		int32 SelectedAttack = PossibleLightAttacks[CurrentLightAttackIndex];
+		PlayAttackMontage(SelectedAttack);
+
+		CurrentLightAttackIndex = (CurrentLightAttackIndex + 1) % PossibleLightAttacks.Num();
+
+		GetWorldTimerManager().ClearTimer(ComboResetTimerHandle);
+		GetWorldTimerManager().SetTimer(ComboResetTimerHandle, this, &AKnight::ResetLightAttackIndex, ComboResetTime, false);
 	}
 }
 
-void AKnight::PlayAttackMontage()
+void AKnight::HeavyAttack(const FInputActionValue& Value)
+{
+	if (CanAttack())
+	{
+		ActionState = EActionState::EAS_Attacking;
+
+		int32 SelectedAttack = PossibleHeavyAttacks[CurrentHeavyAttackIndex];
+		PlayAttackMontage(SelectedAttack);
+
+		CurrentHeavyAttackIndex = (CurrentHeavyAttackIndex + 1) % PossibleHeavyAttacks.Num();
+
+		GetWorldTimerManager().ClearTimer(ComboResetTimerHandle);
+		GetWorldTimerManager().SetTimer(ComboResetTimerHandle, this, &AKnight::ResetHeavyAttackIndex, ComboResetTime, false);
+	}
+}
+
+
+
+void AKnight::PlayAttackMontage(const int32& Selection)
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && AttackMontage)
 	{
 		AnimInstance->Montage_Play(AttackMontage);
-		const int32 Selection = FMath::RandRange(0, 3);
+		//const int32 Selection = FMath::RandRange(PossibleAttacks[0], PossibleAttacks[PossibleAttacks.Num() - 1]);
 		FName RandomAttack = FName();
 		switch (Selection)
 		{
@@ -223,12 +263,20 @@ void AKnight::AttackEnd()
 }
 
 
-void AKnight::SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled)
+void AKnight::SetWeaponCanDamage(bool state)
 {
+	/*
 	if (EquippedWeapon && EquippedWeapon->GetWeaponBox())
 	{
 		EquippedWeapon->GetWeaponBox()->SetCollisionEnabled(CollisionEnabled);
 		EquippedWeapon->EmptyIgnoreActors();
+	}
+	*/
+
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->EmptyIgnoreActors();
+		EquippedWeapon->SetCanDamage(state);
 	}
 }
 
@@ -243,6 +291,7 @@ void AKnight::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AKnight::Look);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AKnight::Jump);
 		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &AKnight::Equip);
-		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &AKnight::Attack);
+		EnhancedInputComponent->BindAction(LightAttackAction, ETriggerEvent::Started, this, &AKnight::LightAttack);
+		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Started, this, &AKnight::HeavyAttack);
 	}
 }

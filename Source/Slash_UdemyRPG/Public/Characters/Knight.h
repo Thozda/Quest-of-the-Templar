@@ -33,7 +33,9 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	UFUNCTION(BlueprintCallable)
-	void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
+	void SetWeaponCanDamage(bool state);
+	//void SetWeaponCanDamage(ECollisionEnabled::Type CollisionEnabled);
+	
 
 protected:
 	// Called when the game starts or when spawned
@@ -65,7 +67,10 @@ protected:
 	UInputAction* EquipAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
-	UInputAction* AttackAction;
+	UInputAction* LightAttackAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
+	UInputAction* HeavyAttackAction;
 
 	//
 	//Callbacks For Input
@@ -75,13 +80,14 @@ protected:
 	void Look(const FInputActionValue& Value);
 	void Jump(const FInputActionValue& Value);
 	void Equip(const FInputActionValue& Value);
-	void Attack(const FInputActionValue& Value);
+	void LightAttack(const FInputActionValue& Value);
+	void HeavyAttack(const FInputActionValue& Value);
 
 	//
 	//Play Montage Functions
 	//
 
-	void PlayAttackMontage();
+	void PlayAttackMontage(const int32& Selection);
 	void PlayArmMontage(const FName& SelectionName);
 	
 	UFUNCTION(BlueprintCallable)
@@ -102,6 +108,12 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void FinishedArming();
 
+	UFUNCTION(BlueprintCallable)
+	void WeamponCanDamageTrue();
+
+	UFUNCTION(BlueprintCallable)
+	void WeamponCanDamageFalse();
+
 private:
 	ECharacterState CharacterState = ECharacterState::ECS_UnEquipped;
 
@@ -120,12 +132,26 @@ private:
 	//
 	//Animation Montages
 	//
-	
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* AttackMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* ArmMontage;
+
+	//
+	//Attack
+	//
+	int32 CurrentLightAttackIndex = 0;
+	FORCEINLINE void ResetLightAttackIndex() { CurrentLightAttackIndex = 0; }
+	int32 CurrentHeavyAttackIndex = 0;
+	FORCEINLINE void ResetHeavyAttackIndex() { CurrentHeavyAttackIndex = 0; }
+
+	float ComboResetTime = 5.f;
+
+	FTimerHandle ComboResetTimerHandle;
+
+	TArray<int32> PossibleLightAttacks = { 0, 1 };
+	TArray<int32> PossibleHeavyAttacks = { 2, 3 };
 
 public:
 	FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
