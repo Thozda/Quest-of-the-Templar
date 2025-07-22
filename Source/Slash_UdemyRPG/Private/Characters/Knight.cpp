@@ -188,8 +188,8 @@ void AKnight::LightAttack(const FInputActionValue& Value)
 
 		CurrentLightAttackIndex = (CurrentLightAttackIndex + 1) % PossibleLightAttacks.Num();
 
-		GetWorldTimerManager().ClearTimer(ComboResetTimerHandle);
-		GetWorldTimerManager().SetTimer(ComboResetTimerHandle, this, &AKnight::ResetLightAttackIndex, ComboResetTime, false);
+		GetWorldTimerManager().ClearTimer(LightComboResetTimerHandle);
+		GetWorldTimerManager().SetTimer(LightComboResetTimerHandle, this, &AKnight::ResetLightAttackIndex, LightComboResetTime, false);
 	}
 }
 
@@ -204,8 +204,8 @@ void AKnight::HeavyAttack(const FInputActionValue& Value)
 
 		CurrentHeavyAttackIndex = (CurrentHeavyAttackIndex + 1) % PossibleHeavyAttacks.Num();
 
-		GetWorldTimerManager().ClearTimer(ComboResetTimerHandle);
-		GetWorldTimerManager().SetTimer(ComboResetTimerHandle, this, &AKnight::ResetHeavyAttackIndex, ComboResetTime, false);
+		GetWorldTimerManager().ClearTimer(HeavyComboResetTimerHandle);
+		GetWorldTimerManager().SetTimer(HeavyComboResetTimerHandle, this, &AKnight::ResetHeavyAttackIndex, HeavyComboResetTime, false);
 	}
 }
 

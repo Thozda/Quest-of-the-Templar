@@ -146,9 +146,11 @@ private:
 	int32 CurrentHeavyAttackIndex = 0;
 	FORCEINLINE void ResetHeavyAttackIndex() { CurrentHeavyAttackIndex = 0; }
 
-	float ComboResetTime = 5.f;
+	float LightComboResetTime = 5.f;
+	float HeavyComboResetTime = 5.f;
 
-	FTimerHandle ComboResetTimerHandle;
+	FTimerHandle LightComboResetTimerHandle;
+	FTimerHandle HeavyComboResetTimerHandle;
 
 	TArray<int32> PossibleLightAttacks = { 0, 1 };
 	TArray<int32> PossibleHeavyAttacks = { 2, 3 };

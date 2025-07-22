@@ -12,6 +12,7 @@ class UAnimMontage;
 class UNiagaraSystem;
 class UAttributeComponent;
 class UHealthBarComponent;
+class AAIController;
 
 UCLASS()
 class SLASH_UDEMYRPG_API AEnemy : public ACharacter, public IHitInterface
@@ -62,13 +63,51 @@ private:
 	UHealthBarComponent* HealthBarWidget;
 
 	//
-	//AI
+	//AI Navigation
+	//
+	UPROPERTY()
+	AAIController* EnemyController;
+
+	//Current Patrol Target
+	UPROPERTY(EditInstanceOnly, Category = "AI Navigation")
+	AActor* PatrolTarget;
+
+	//Possible Targets
+	UPROPERTY(EditInstanceOnly, Category = "AI Navigation")
+	TArray<AActor*> PatrolTargets;
+
+	UPROPERTY(EditAnywhere)
+	double PatrolRadius = 150.f;
+
+	int32 PatrolPointIndex = 0;
+
+	FTimerHandle PatrolTimer;
+
+	UPROPERTY(EditAnywhere, Category = "AI Navigation")
+	float WaitMin = 5.f;
+
+	UPROPERTY(EditAnywhere, Category = "AI Navigation")
+	float WaitMax = 10.f;
+
+	void PatrolTimerFinished();
+
+	void MoveToTarget(AActor* Target);
+	bool NewPatrolTarget();
+
+	void CheckPatrolTarget();
+
+	//
+	//AI Combat
 	//
 	UPROPERTY()
 	AActor* CombatTarget;
 
+	bool InTargetRange(AActor* Target, double Radius);
+
 	UPROPERTY(EditAnywhere)
 	double CombatRadius = 2000.f;
+
+	void CheckCombatTarget();
 
 	//
 	//Animation Montages

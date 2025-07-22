@@ -11,6 +11,8 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Components/AttributeComponent.h"
 #include "HUD/HealthBarComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "AIController.h"
 
 // Sets default values
 AEnemy::AEnemy()
@@ -29,6 +31,11 @@ AEnemy::AEnemy()
 
 	HealthBarWidget = CreateDefaultSubobject<UHealthBarComponent>(TEXT("Health Bar"));
 	HealthBarWidget->SetupAttachment(GetRootComponent());
+
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationRoll = false;
+	bUseControllerRotationYaw = false;
 }
 
 // Called when the game starts or when spawned
@@ -40,29 +47,85 @@ void AEnemy::BeginPlay()
 		HealthBarWidget->SetHealthPercent(Attributes->GetHealthPercent());
 		HealthBarWidget->SetVisibility(false);
 	}
+
+	EnemyController = Cast<AAIController>(GetController());
+
+	if (PatrolTargets.Num() > 0)
+	{
+		PatrolTarget = PatrolTargets[PatrolPointIndex];
+	}
+	//GetWorldTimerManager().SetTimer(PatrolTimer, this, &AEnemy::PatrolTimerFinished, 5.f);
+	MoveToTarget(PatrolTarget);
 }
-
-
 
 // Called every frame
 void AEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (CombatTarget)
+	CheckCombatTarget();
+	
+	CheckPatrolTarget();
+}
+
+void AEnemy::CheckPatrolTarget()
+{
+	if (InTargetRange(PatrolTarget, PatrolRadius) && !GetWorldTimerManager().IsTimerActive(PatrolTimer))
 	{
-		const double DistanceToTarget = (CombatTarget->GetActorLocation() - GetActorLocation()).Size();
+		GetWorldTimerManager().SetTimer(PatrolTimer, this, &AEnemy::PatrolTimerFinished, FMath::RandRange(WaitMin, WaitMax));
+	}
+}
 
-		if (DistanceToTarget > CombatRadius)
+void AEnemy::CheckCombatTarget()
+{
+	if (!InTargetRange(CombatTarget, CombatRadius))
+	{
+		CombatTarget = nullptr;
+
+		if (HealthBarWidget)
 		{
-			CombatTarget = nullptr;
-
-			if (HealthBarWidget)
-			{
-				HealthBarWidget->SetVisibility(false);
-			}
+			HealthBarWidget->SetVisibility(false);
 		}
 	}
+}
+
+void AEnemy::PatrolTimerFinished()
+{
+	if (NewPatrolTarget())
+	{
+		MoveToTarget(PatrolTarget);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Cannot Set Patrol Target"))
+	}
+}
+
+void AEnemy::MoveToTarget(AActor* Target)
+{
+	if (EnemyController == nullptr || Target == nullptr) return;
+
+	FAIMoveRequest MoveRequest;
+	MoveRequest.SetGoalActor(Target);
+	MoveRequest.SetAcceptanceRadius(15.f);
+
+	EnemyController->MoveTo(MoveRequest);
+}
+
+bool AEnemy::NewPatrolTarget()
+{
+	if (PatrolTargets.Num() <= 0) return false;
+
+	PatrolPointIndex = (PatrolPointIndex + 1) % PatrolTargets.Num();
+	PatrolTarget = PatrolTargets[PatrolPointIndex];
+	return true;
+}
+
+bool AEnemy::InTargetRange(AActor* Target, double Radius)
+{
+	if (Target == nullptr) return false;
+	const double DistanceToTarget = (Target->GetActorLocation() - GetActorLocation()).Size();
+	return DistanceToTarget <= Radius;
 }
 
 float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
