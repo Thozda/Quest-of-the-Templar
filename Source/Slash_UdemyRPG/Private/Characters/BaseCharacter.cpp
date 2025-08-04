@@ -3,6 +3,7 @@
 
 #include "Characters/BaseCharacter.h"
 #include "Items/Weapons/Weapon.h"
+#include "TimerManager.h"
 #include "Components/AttributeComponent.h"
 
 ABaseCharacter::ABaseCharacter()
@@ -25,22 +26,28 @@ void ABaseCharacter::Tick(float DeltaTime)
 
 }
 
-void ABaseCharacter::BaseAttack(EActionState ActionState, TArray<int32> PossibleAttacks, int32 CurrentAttackIndex, FTimerHandle ComboResetTimerHandle, float ComboResetTime)
+bool ABaseCharacter::BaseAttack(TArray<int32>& PossibleAttacks, int32& CurrentAttackIndex, FTimerHandle& ComboResetTimerHandle, float ComboResetTime, TFunction<void()> ResetFunc)
 {
 	if (CanAttack())
 	{
-		AttackIndex = CurrentAttackIndex;
-
-		ActionState = EActionState::EAS_Attacking;
 		int32 SelectedAttack = PossibleAttacks[CurrentAttackIndex];
 		PlayAttackMontage(SelectedAttack);
 
 		CurrentAttackIndex = (CurrentAttackIndex + 1) % PossibleAttacks.Num();
 
 		GetWorldTimerManager().ClearTimer(ComboResetTimerHandle);
-		GetWorldTimerManager().SetTimer(ComboResetTimerHandle, this, &ABaseCharacter::ResetAttackIndex, ComboResetTime, false);
+
+		// Create a dynamic delegate that captures ResetFunc
+		FTimerDelegate ResetDelegate;
+		ResetDelegate.BindLambda(ResetFunc);
+		GetWorldTimerManager().SetTimer(ComboResetTimerHandle, ResetDelegate, ComboResetTime, false);
+
+		return true;
 	}
+
+	return false;
 }
+
 
 bool ABaseCharacter::CanAttack()
 {
@@ -55,22 +62,6 @@ void ABaseCharacter::Die()
 void ABaseCharacter::AttackEnd()
 {
 
-}
-
-void ABaseCharacter::WeamponCanDamageTrue()
-{
-	if (EquippedWeapon)
-	{
-		EquippedWeapon->SetCanDamage(true);
-	}
-}
-
-void ABaseCharacter::WeamponCanDamageFalse()
-{
-	if (EquippedWeapon)
-	{
-		EquippedWeapon->SetCanDamage(false);
-	}
 }
 
 void ABaseCharacter::DirectionalHitReact(const FVector& ImpactPoint)

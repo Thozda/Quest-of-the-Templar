@@ -32,7 +32,7 @@ protected:
 	//Attack
 	//
 	virtual bool CanAttack();
-	virtual void BaseAttack(EActionState ActionState, TArray<int32> PossibleAttacks, int32 CurrentAttackIndex, FTimerHandle ComboResetTimerHandle, float ComboResetTime);
+	virtual bool BaseAttack(TArray<int32>& PossibleAttacks, int32& CurrentAttackIndex, FTimerHandle& ComboResetTimerHandle, float ComboResetTime, TFunction<void()> ResetFunc);
 
 	UFUNCTION(BlueprintCallable)
 	virtual void AttackEnd();
@@ -44,12 +44,6 @@ protected:
 	//
 	UPROPERTY(VisibleAnywhere, Category = Weapon)
 	AWeapon* EquippedWeapon;
-
-	UFUNCTION(BlueprintCallable)
-	void WeamponCanDamageTrue();
-
-	UFUNCTION(BlueprintCallable)
-	void WeamponCanDamageFalse();
 
 	//
 	//Hit
@@ -89,5 +83,5 @@ protected:
 
 private:
 	int32 AttackIndex;
-	FORCEINLINE void ResetAttackIndex() { AttackIndex = 0; };
+	FORCEINLINE void ResetAttackIndex(int32& Index) { Index = 0; };
 };

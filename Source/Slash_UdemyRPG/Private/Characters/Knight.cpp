@@ -58,7 +58,6 @@ void AKnight::BeginPlay()
 void AKnight::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
 }
 
 void AKnight::Move(const FInputActionValue& Value)
@@ -176,12 +175,18 @@ void AKnight::PlayArmMontage(const FName& SelectionName)
 
 void AKnight::LightAttack(const FInputActionValue& Value)
 {
-	BaseAttack(ActionState, PossibleLightAttacks, CurrentLightAttackIndex, LightComboResetTimerHandle, LightComboResetTime);
+	if (BaseAttack(PossibleLightAttacks, CurrentLightAttackIndex, LightComboResetTimerHandle, LightComboResetTime, [this]() { CurrentLightAttackIndex = 0; }))
+	{
+		ActionState = EActionState::EAS_Attacking;
+	}
 }
 
 void AKnight::HeavyAttack(const FInputActionValue& Value)
 {
-	BaseAttack(ActionState, PossibleHeavyAttacks, CurrentHeavyAttackIndex, HeavyComboResetTimerHandle, HeavyComboResetTime);
+	if (BaseAttack(PossibleHeavyAttacks, CurrentHeavyAttackIndex, HeavyComboResetTimerHandle, HeavyComboResetTime, [this]() { CurrentHeavyAttackIndex = 0; }))
+	{
+		ActionState = EActionState::EAS_Attacking;
+	}
 }
 
 void AKnight::PlayAttackMontage(const int32& Selection)
