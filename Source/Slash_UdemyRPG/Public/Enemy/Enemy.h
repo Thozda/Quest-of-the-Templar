@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
+#include "Characters/BaseCharacter.h"
 #include "Interfaces/HitInterface.h"
 #include "Characters/CharacterTypes.h"
 #include "Enemy.generated.h"
@@ -13,9 +13,10 @@ class UNiagaraSystem;
 class UAttributeComponent;
 class UHealthBarComponent;
 class AAIController;
+class UPawnSensingComponent;
 
 UCLASS()
-class SLASH_UDEMYRPG_API AEnemy : public ACharacter, public IHitInterface
+class SLASH_UDEMYRPG_API AEnemy : public ABaseCharacter, public IHitInterface
 {
 	GENERATED_BODY()
 
@@ -62,6 +63,8 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	UHealthBarComponent* HealthBarWidget;
 
+	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
+
 	//
 	//AI Navigation
 	//
@@ -80,6 +83,12 @@ private:
 	double PatrolRadius = 150.f;
 
 	int32 PatrolPointIndex = 0;
+
+	UPROPERTY(VisibleAnywhere)
+	UPawnSensingComponent* PawnSensing;
+
+	UFUNCTION()
+	void PawnSeen(APawn* SeenPawn);
 
 	FTimerHandle PatrolTimer;
 
@@ -106,6 +115,9 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	double CombatRadius = 2000.f;
+
+	UPROPERTY(EditAnywhere)
+	double AttackRadius = 200.f;
 
 	void CheckCombatTarget();
 

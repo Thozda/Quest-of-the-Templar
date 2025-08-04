@@ -50,6 +50,8 @@ void AKnight::BeginPlay()
 			Subsystem->AddMappingContext(KnightMappingContext, 0);
 		}
 	}
+
+	Tags.Add(FName("Knight"));
 }
 
 // Called every frame
@@ -262,23 +264,6 @@ void AKnight::AttackEnd()
 	ActionState = EActionState::EAS_Unoccupied;
 }
 
-
-void AKnight::SetWeaponCanDamage(bool state)
-{
-	/*
-	if (EquippedWeapon && EquippedWeapon->GetWeaponBox())
-	{
-		EquippedWeapon->GetWeaponBox()->SetCollisionEnabled(CollisionEnabled);
-		EquippedWeapon->EmptyIgnoreActors();
-	}
-	*/
-
-	if (EquippedWeapon)
-	{
-		EquippedWeapon->EmptyIgnoreActors();
-		EquippedWeapon->SetCanDamage(state);
-	}
-}
 
 // Called to bind functionality to input
 void AKnight::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

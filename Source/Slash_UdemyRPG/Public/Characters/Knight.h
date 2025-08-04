@@ -3,9 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
+#include "BaseCharacter.h"
 #include "InputActionValue.h"
-#include "CharacterTypes.h"
 #include "Knight.generated.h"
 
 class UInputMappingContext;
@@ -18,7 +17,7 @@ class USoundBase;
 class AWeapon;
 
 UCLASS()
-class SLASH_UDEMYRPG_API AKnight : public ACharacter
+class SLASH_UDEMYRPG_API AKnight : public ABaseCharacter
 {
 	GENERATED_BODY()
 
@@ -31,11 +30,6 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	UFUNCTION(BlueprintCallable)
-	void SetWeaponCanDamage(bool state);
-	//void SetWeaponCanDamage(ECollisionEnabled::Type CollisionEnabled);
-	
 
 protected:
 	// Called when the game starts or when spawned
@@ -87,13 +81,14 @@ protected:
 	//Play Montage Functions
 	//
 
-	void PlayAttackMontage(const int32& Selection);
+	virtual void PlayAttackMontage(const int32& Selection) override;
 	void PlayArmMontage(const FName& SelectionName);
 	
 	UFUNCTION(BlueprintCallable)
 	void AttackEnd();
 
-	bool CanAttack();
+	virtual bool CanAttack() override;
+
 	bool KnightIsFalling();
 
 	bool CanDisarm();
@@ -125,9 +120,6 @@ private:
 
 	UPROPERTY(VisibleInstanceOnly)
 	AItem* OverlappingItem;
-
-	UPROPERTY(VisibleAnywhere, Category = Weapon)
-	AWeapon* EquippedWeapon;
 
 	//
 	//Animation Montages

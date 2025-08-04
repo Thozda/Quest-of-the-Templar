@@ -15,7 +15,7 @@
 AWeapon::AWeapon()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
+	/*
 	WeaponBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Weapon Box"));
 	WeaponBox->SetupAttachment(GetRootComponent());
 	WeaponBox->SetBoxExtent(FVector(15.f, 15.f, 75.f));
@@ -23,6 +23,7 @@ AWeapon::AWeapon()
 	WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	WeaponBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 	WeaponBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+	*/
 
 	BoxTraceStart = CreateDefaultSubobject<USceneComponent>(TEXT("Box Trace Start"));
 	BoxTraceStart->SetupAttachment(GetRootComponent());
@@ -99,7 +100,7 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 //
 //Damage
 //
-void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+/*void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	/*
 	*
@@ -142,7 +143,7 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 		UGameplayStatics::ApplyDamage(BoxHit.GetActor(), Damage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
 	}
 	*/
-}
+//}*/
 
 void AWeapon::WeaponBoxTrace()
 {
