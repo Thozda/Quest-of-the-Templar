@@ -58,7 +58,7 @@ void AKnight::BeginPlay()
 void AKnight::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	
 }
 
 void AKnight::Move(const FInputActionValue& Value)
@@ -164,54 +164,25 @@ void AKnight::FinishedArming()
 	ActionState = EActionState::EAS_Unoccupied;
 }
 
-void AKnight::WeamponCanDamageTrue()
+void AKnight::PlayArmMontage(const FName& SelectionName)
 {
-	if (EquippedWeapon)
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ArmMontage)
 	{
-		EquippedWeapon->SetCanDamage(true);
-	}
-}
-
-void AKnight::WeamponCanDamageFalse()
-{
-	if (EquippedWeapon)
-	{
-		EquippedWeapon->SetCanDamage(false);
+		AnimInstance->Montage_Play(ArmMontage);
+		AnimInstance->Montage_JumpToSection(SelectionName, ArmMontage);
 	}
 }
 
 void AKnight::LightAttack(const FInputActionValue& Value)
 {
-	if (CanAttack())
-	{
-		ActionState = EActionState::EAS_Attacking;
-		int32 SelectedAttack = PossibleLightAttacks[CurrentLightAttackIndex];
-		PlayAttackMontage(SelectedAttack);
-
-		CurrentLightAttackIndex = (CurrentLightAttackIndex + 1) % PossibleLightAttacks.Num();
-
-		GetWorldTimerManager().ClearTimer(LightComboResetTimerHandle);
-		GetWorldTimerManager().SetTimer(LightComboResetTimerHandle, this, &AKnight::ResetLightAttackIndex, LightComboResetTime, false);
-	}
+	BaseAttack(ActionState, PossibleLightAttacks, CurrentLightAttackIndex, LightComboResetTimerHandle, LightComboResetTime);
 }
 
 void AKnight::HeavyAttack(const FInputActionValue& Value)
 {
-	if (CanAttack())
-	{
-		ActionState = EActionState::EAS_Attacking;
-
-		int32 SelectedAttack = PossibleHeavyAttacks[CurrentHeavyAttackIndex];
-		PlayAttackMontage(SelectedAttack);
-
-		CurrentHeavyAttackIndex = (CurrentHeavyAttackIndex + 1) % PossibleHeavyAttacks.Num();
-
-		GetWorldTimerManager().ClearTimer(HeavyComboResetTimerHandle);
-		GetWorldTimerManager().SetTimer(HeavyComboResetTimerHandle, this, &AKnight::ResetHeavyAttackIndex, HeavyComboResetTime, false);
-	}
+	BaseAttack(ActionState, PossibleHeavyAttacks, CurrentHeavyAttackIndex, HeavyComboResetTimerHandle, HeavyComboResetTime);
 }
-
-
 
 void AKnight::PlayAttackMontage(const int32& Selection)
 {
@@ -249,21 +220,10 @@ bool AKnight::CanAttack()
 		!KnightIsFalling();
 }
 
-void AKnight::PlayArmMontage(const FName& SelectionName)
-{
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && ArmMontage)
-	{
-		AnimInstance->Montage_Play(ArmMontage);
-		AnimInstance->Montage_JumpToSection(SelectionName, ArmMontage);
-	}
-}
-
 void AKnight::AttackEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
 }
-
 
 // Called to bind functionality to input
 void AKnight::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

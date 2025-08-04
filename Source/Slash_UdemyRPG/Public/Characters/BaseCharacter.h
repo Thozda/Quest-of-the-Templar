@@ -5,12 +5,15 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "CharacterTypes.h"
+#include "Interfaces/HitInterface.h"
 #include "BaseCharacter.generated.h"
 
+class UNiagaraSystem;
+class UAttributeComponent;
 class AWeapon;
 
 UCLASS()
-class SLASH_UDEMYRPG_API ABaseCharacter : public ACharacter
+class SLASH_UDEMYRPG_API ABaseCharacter : public ACharacter, public IHitInterface
 {
 	GENERATED_BODY()
 
@@ -25,16 +28,66 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	//
+	//Attack
+	//
 	virtual bool CanAttack();
-	virtual void BaseAttack(TArray<int32> PossibleAttacks, int32 CurrentAttackIndex, FTimerHandle ComboResetTimerHandle, float ComboResetTime);
-	virtual void PlayAttackMontage(const int32& Selection);
+	virtual void BaseAttack(EActionState ActionState, TArray<int32> PossibleAttacks, int32 CurrentAttackIndex, FTimerHandle ComboResetTimerHandle, float ComboResetTime);
 
-	UPROPERTY(BlueprintReadWrite)
-	EActionState ActionState = EActionState::EAS_Unoccupied;
+	UFUNCTION(BlueprintCallable)
+	virtual void AttackEnd();
 
+	virtual void Die();
+
+	//
+	//Damage
+	//
 	UPROPERTY(VisibleAnywhere, Category = Weapon)
 	AWeapon* EquippedWeapon;
 
-private:
+	UFUNCTION(BlueprintCallable)
+	void WeamponCanDamageTrue();
 
+	UFUNCTION(BlueprintCallable)
+	void WeamponCanDamageFalse();
+
+	//
+	//Hit
+	//
+	void DirectionalHitReact(const FVector& ImpactPoint);
+
+	//
+	//Attributes
+	//
+	UPROPERTY(VisibleAnywhere)
+	UAttributeComponent* Attributes;
+
+	//
+	//Anim Montages
+	//
+	virtual void PlayAttackMontage(const int32& Selection);
+
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* AttackMontage;
+
+	virtual void PlayHitReactMontage(const FName& SelectionName);
+
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* HitReactMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* DeathMontage;
+
+	//
+	//VFX
+	//
+	UPROPERTY(EditAnywhere, Category = VisualEffects)
+	UParticleSystem* HitParticles;
+
+	UPROPERTY(EditAnywhere, Category = VisualEffects)
+	UNiagaraSystem* NiagaraHitParticles;
+
+private:
+	int32 AttackIndex;
+	FORCEINLINE void ResetAttackIndex() { AttackIndex = 0; };
 };

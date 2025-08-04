@@ -14,7 +14,6 @@ class UCameraComponent;
 class AItem;
 class UAnimMontage;
 class USoundBase;
-class AWeapon;
 
 UCLASS()
 class SLASH_UDEMYRPG_API AKnight : public ABaseCharacter
@@ -84,8 +83,7 @@ protected:
 	virtual void PlayAttackMontage(const int32& Selection) override;
 	void PlayArmMontage(const FName& SelectionName);
 	
-	UFUNCTION(BlueprintCallable)
-	void AttackEnd();
+	virtual void AttackEnd() override;
 
 	virtual bool CanAttack() override;
 
@@ -103,11 +101,6 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void FinishedArming();
 
-	UFUNCTION(BlueprintCallable)
-	void WeamponCanDamageTrue();
-
-	UFUNCTION(BlueprintCallable)
-	void WeamponCanDamageFalse();
 
 private:
 	ECharacterState CharacterState = ECharacterState::ECS_UnEquipped;
@@ -124,8 +117,6 @@ private:
 	//
 	//Animation Montages
 	//
-	UPROPERTY(EditDefaultsOnly, Category = Montages)
-	UAnimMontage* AttackMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* ArmMontage;
@@ -134,9 +125,7 @@ private:
 	//Attack
 	//
 	int32 CurrentLightAttackIndex = 0;
-	FORCEINLINE void ResetLightAttackIndex() { CurrentLightAttackIndex = 0; }
 	int32 CurrentHeavyAttackIndex = 0;
-	FORCEINLINE void ResetHeavyAttackIndex() { CurrentHeavyAttackIndex = 0; }
 
 	float LightComboResetTime = 5.f;
 	float HeavyComboResetTime = 5.f;

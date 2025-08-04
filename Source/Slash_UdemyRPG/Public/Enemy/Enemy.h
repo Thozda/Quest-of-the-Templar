@@ -4,19 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "Characters/BaseCharacter.h"
-#include "Interfaces/HitInterface.h"
 #include "Characters/CharacterTypes.h"
 #include "Enemy.generated.h"
 
-class UAnimMontage;
-class UNiagaraSystem;
-class UAttributeComponent;
 class UHealthBarComponent;
 class AAIController;
 class UPawnSensingComponent;
 
 UCLASS()
-class SLASH_UDEMYRPG_API AEnemy : public ABaseCharacter, public IHitInterface
+class SLASH_UDEMYRPG_API AEnemy : public ABaseCharacter
 {
 	GENERATED_BODY()
 
@@ -34,32 +30,16 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	void Die();
+	virtual void Die() override;
 
 	UPROPERTY(BlueprintReadOnly)
 	EDeathPose DeathPose = EDeathPose::EDP_Alive;
 
-	//
-	//Play Montage Functions
-	//
-	void PlayHitReactMontage(const FName& SelectionName);
-
-	//
-	//VFX
-	//
-	UPROPERTY(EditAnywhere, Category = VisualEffects)
-	UParticleSystem* HitParticles;
-
-	UPROPERTY(EditAnywhere, Category = VisualEffects)
-	UNiagaraSystem* NiagaraHitParticles;
 
 private:
 	//
 	//Attributes
 	//
-	UPROPERTY(VisibleAnywhere)
-	UAttributeComponent* Attributes;
-	
 	UPROPERTY(VisibleAnywhere)
 	UHealthBarComponent* HealthBarWidget;
 
@@ -122,23 +102,12 @@ private:
 	void CheckCombatTarget();
 
 	//
-	//Animation Montages
-	//
-	UPROPERTY(EditDefaultsOnly, Category = Montages)
-	UAnimMontage* HitReactMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category = Montages)
-	UAnimMontage* DeathMontage;
-
-	//
 	//SFX
 	//
 	UPROPERTY(EditAnywhere, Category = Sounds)
 	USoundBase* HitSound;
 
 	void HitFX(const FVector& ImpactPoint);
-
-	void DirectionalHitReact(const FVector& ImpactPoint);
 
 
 public:	
