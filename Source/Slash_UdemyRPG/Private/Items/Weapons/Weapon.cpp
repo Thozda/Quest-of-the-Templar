@@ -15,16 +15,7 @@
 AWeapon::AWeapon()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	/*
-	WeaponBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Weapon Box"));
-	WeaponBox->SetupAttachment(GetRootComponent());
-	WeaponBox->SetBoxExtent(FVector(15.f, 15.f, 75.f));
-	WeaponBox->SetWorldLocation(FVector(0.f, 0.f, 90.f));
-	WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	WeaponBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
-	WeaponBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
-	*/
-
+	
 	BoxTraceStart = CreateDefaultSubobject<USceneComponent>(TEXT("Box Trace Start"));
 	BoxTraceStart->SetupAttachment(GetRootComponent());
 	BoxTraceStart->SetWorldLocation(FVector(0.f, 0.f, 15.f));
@@ -37,8 +28,6 @@ AWeapon::AWeapon()
 void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
-
-	//WeaponBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxOverlap);
 }
 
 void AWeapon::Tick(float DeltaTime)
@@ -100,50 +89,6 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 //
 //Damage
 //
-/*void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	/*
-	*
-
-	if (!bCanDamage) return;
-
-	const FVector Start = BoxTraceStart->GetComponentLocation();
-	const FVector End = BoxTraceEnd->GetComponentLocation();
-	FHitResult BoxHit;
-
-	TArray<AActor*> ActorsToIgnore;
-	ActorsToIgnore.AddUnique(this);
-
-	for (AActor* Actor : IgnoreActors)
-	{
-		ActorsToIgnore.AddUnique(Actor);
-	}
-
-	UKismetSystemLibrary::BoxTraceSingle(this, Start, End, FVector(15.f, 15.f, 15.f), BoxTraceStart->GetComponentRotation(), ETraceTypeQuery::TraceTypeQuery1, false, ActorsToIgnore,
-		EDrawDebugTrace::ForDuration, BoxHit, true);
-
-	if (BoxHit.GetActor() && !IgnoreActors.Contains(BoxHit.GetActor()))
-	{
-		IgnoreActors.AddUnique(BoxHit.GetActor());
-		UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *BoxHit.GetActor()->GetName());
-
-		hits++;
-		UE_LOG(LogTemp, Warning, TEXT("Hits: %i"), hits);
-
-		IHitInterface* HitInterface = Cast<IHitInterface>(BoxHit.GetActor());
-		if (HitInterface)
-		{
-			HitInterface->Execute_GetHit(BoxHit.GetActor(), BoxHit.ImpactPoint);
-		}
-
-		CreateFields(BoxHit.ImpactPoint);
-
-		DRAW_SPHERE_HIT(BoxHit.ImpactPoint);
-
-		UGameplayStatics::ApplyDamage(BoxHit.GetActor(), Damage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
-	}
-	*/
-//}*/
 
 void AWeapon::WeaponBoxTrace()
 {

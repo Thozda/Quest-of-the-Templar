@@ -39,8 +39,6 @@ protected:
 	//
 	//Damage
 	//
-	//UFUNCTION()
-	//void OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	//
 	//Physics
@@ -65,9 +63,6 @@ private:
 	void WeaponBoxTrace();
 	void DealDamage();
 
-	//UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
-	//UBoxComponent* WeaponBox;
-
 	UPROPERTY(VisibleAnywhere)
 	USceneComponent* BoxTraceStart;
 	
@@ -81,7 +76,6 @@ private:
 	bool bCanDamage = false;
 
 public:
-	//FORCEINLINE UBoxComponent* GetWeaponBox() const { return WeaponBox; }
 	FORCEINLINE void EmptyIgnoreActors() { IgnoreActors.Empty(); }
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE void SetCanDamage(bool state) { bCanDamage = state; }
