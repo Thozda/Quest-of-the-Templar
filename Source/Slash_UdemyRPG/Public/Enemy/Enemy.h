@@ -10,6 +10,7 @@
 class UHealthBarComponent;
 class AAIController;
 class UPawnSensingComponent;
+class AWeapon;
 
 UCLASS()
 class SLASH_UDEMYRPG_API AEnemy : public ABaseCharacter
@@ -21,8 +22,6 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
 	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
@@ -30,11 +29,26 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
+	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
+
+	//
+	//Attacks
+	//
+	virtual void AttackEnd() override;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	TArray<FName> PossibleAttacks;
+
+	//
+	//Death
+	//
 	virtual void Die() override;
+	virtual int32 PlayDeathMontage() override;
+	virtual void HandleDamage(float DamageAmount) override;
 
 	UPROPERTY(BlueprintReadOnly)
-	EDeathPose DeathPose = EDeathPose::EDP_Alive;
-
+	TEnumAsByte<EDeathPose> DeathPose;
 
 private:
 	//
@@ -43,7 +57,8 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	UHealthBarComponent* HealthBarWidget;
 
-	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
+	void SetHealthBarVisibility(bool Visibility);
+
 
 	//
 	//AI Navigation
@@ -78,12 +93,24 @@ private:
 	UPROPERTY(EditAnywhere, Category = "AI Navigation")
 	float WaitMax = 10.f;
 
-	void PatrolTimerFinished();
+	UPROPERTY(EditAnywhere, Category = "AI Navigation")
+	float PatrollingSpeed = 100.f;
 
+	UPROPERTY(EditAnywhere, Category = "AI Navigation")
+	float ChasingSpeed = 300.f;
+
+	void StartPatrolling();
+	void PatrolTimerFinished();
 	void MoveToTarget(AActor* Target);
 	bool NewPatrolTarget();
-
 	void CheckPatrolTarget();
+	void ChaseTarget();
+
+	FORCEINLINE bool IsOutsideCombatRadius() { return !InTargetRange(CombatTarget, CombatRadius); }
+	FORCEINLINE bool IsOutsideAttackRadius() { return !InTargetRange(CombatTarget, AttackRadius); }
+	FORCEINLINE bool IsInsideAttackRadius() { return InTargetRange(CombatTarget, AttackRadius); }
+	FORCEINLINE bool IsChasing() { return EnemyState == EEnemyState::EES_Chasing; }
+	FORCEINLINE bool IsAttacking() { return EnemyState == EEnemyState::EES_Attacking; }
 
 	//
 	//AI Combat
@@ -97,18 +124,47 @@ private:
 	double CombatRadius = 2000.f;
 
 	UPROPERTY(EditAnywhere)
-	double AttackRadius = 200.f;
+	double AttackRadius = 150.f;
 
 	void CheckCombatTarget();
 
-	//
-	//SFX
-	//
-	UPROPERTY(EditAnywhere, Category = Sounds)
-	USoundBase* HitSound;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AWeapon> WeaponClass;
 
-	void HitFX(const FVector& ImpactPoint);
+	UPROPERTY(EditAnywhere, Category = Combat)
+	FTimerHandle AttackTimer;
 
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float AttackMin = 0.5f;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float AttackMax = 1.f;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float DeathLifeSpan = 60.f;
+
+	virtual void Destroyed() override;
+
+	virtual bool CanAttack() override;
+
+	void LoseInterest();
+
+	int32 CurrentAttackIndex = 0;
+
+	float ComboResetTime = 5.f;
+
+	FTimerHandle ComboResetTimerHandle;
+
+	void Attack();
+	void StartAttackTimer();
+
+	FORCEINLINE void ClearAttackTimer() { GetWorldTimerManager().ClearTimer(AttackTimer); }
+	FORCEINLINE bool IsDead() { return EnemyState == EEnemyState::EES_Dead; }
+	FORCEINLINE bool IsEngaged() { return EnemyState == EEnemyState::EES_Engaged; }
+
+	//
+	//Anim Montages
+	//
 
 public:	
 

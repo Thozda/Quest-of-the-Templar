@@ -32,7 +32,7 @@ protected:
 	//Attack
 	//
 	virtual bool CanAttack();
-	virtual bool BaseAttack(TArray<int32>& PossibleAttacks, int32& CurrentAttackIndex, FTimerHandle& ComboResetTimerHandle, float ComboResetTime, TFunction<void()> ResetFunc);
+	virtual bool BaseAttack(TArray<FName>& PossibleAttacks, int32& CurrentAttackIndex, FTimerHandle& ComboResetTimerHandle, float ComboResetTime, TFunction<void()> ResetFunc);
 
 	UFUNCTION(BlueprintCallable)
 	virtual void AttackEnd();
@@ -45,6 +45,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = Weapon)
 	AWeapon* EquippedWeapon;
 
+	virtual void HandleDamage(float DamageAmount);
+
+	void DisableCapsule();
+
 	//
 	//Hit
 	//
@@ -56,10 +60,15 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	UAttributeComponent* Attributes;
 
+	bool IsAlive();
+
 	//
 	//Anim Montages
 	//
-	virtual void PlayAttackMontage(const int32& Selection);
+	void PlayMontageSection(UAnimMontage* Montage, const FName& SectionName);
+	int32 PlayRandomMontageSection(UAnimMontage* Montage, const TArray<FName>& SectionNames);
+
+	virtual void PlayAttackMontage(const FName& Selection);
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* AttackMontage;
@@ -72,6 +81,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* DeathMontage;
 
+	UPROPERTY(EditAnywhere, Category = Combat)
+	TArray<FName> AttackMontageSections;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	TArray<FName> DeathMontageSections;
+
+	virtual int32 PlayDeathMontage();
+
 	//
 	//VFX
 	//
@@ -80,6 +97,11 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = VisualEffects)
 	UNiagaraSystem* NiagaraHitParticles;
+
+	UPROPERTY(EditAnywhere, Category = Sounds)
+	USoundBase* HitSound;
+
+	void HitFX(const FVector& ImpactPoint);
 
 private:
 	int32 AttackIndex;

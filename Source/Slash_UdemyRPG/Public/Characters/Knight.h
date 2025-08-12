@@ -43,7 +43,6 @@ protected:
 	//
 	//Enhanced Input Variables
 	//
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputMappingContext* KnightMappingContext;
 
@@ -68,7 +67,6 @@ protected:
 	//
 	//Callbacks For Input
 	//
-
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void Jump(const FInputActionValue& Value);
@@ -77,10 +75,8 @@ protected:
 	void HeavyAttack(const FInputActionValue& Value);
 
 	//
-	//Play Montage Functions
+	//Anim Montages
 	//
-
-	virtual void PlayAttackMontage(const int32& Selection) override;
 	void PlayArmMontage(const FName& SelectionName);
 	
 	virtual void AttackEnd() override;
@@ -101,6 +97,11 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void FinishedArming();
 
+	UPROPERTY(EditAnywhere, Category = Combat)
+	TArray<FName> PossibleLightAttacks;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	TArray<FName> PossibleHeavyAttacks;
 
 private:
 	ECharacterState CharacterState = ECharacterState::ECS_UnEquipped;
@@ -117,7 +118,6 @@ private:
 	//
 	//Animation Montages
 	//
-
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* ArmMontage;
 
@@ -132,9 +132,6 @@ private:
 
 	FTimerHandle LightComboResetTimerHandle;
 	FTimerHandle HeavyComboResetTimerHandle;
-
-	TArray<int32> PossibleLightAttacks = { 0, 1 };
-	TArray<int32> PossibleHeavyAttacks = { 2, 3 };
 
 public:
 	FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }

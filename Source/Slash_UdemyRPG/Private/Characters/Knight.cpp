@@ -175,7 +175,7 @@ void AKnight::PlayArmMontage(const FName& SelectionName)
 
 void AKnight::LightAttack(const FInputActionValue& Value)
 {
-	if (BaseAttack(PossibleLightAttacks, CurrentLightAttackIndex, LightComboResetTimerHandle, LightComboResetTime, [this]() { CurrentLightAttackIndex = 0; }))
+	if (CanAttack() && BaseAttack(PossibleLightAttacks, CurrentLightAttackIndex, LightComboResetTimerHandle, LightComboResetTime, [this]() { CurrentLightAttackIndex = 0; }))
 	{
 		ActionState = EActionState::EAS_Attacking;
 	}
@@ -183,38 +183,9 @@ void AKnight::LightAttack(const FInputActionValue& Value)
 
 void AKnight::HeavyAttack(const FInputActionValue& Value)
 {
-	if (BaseAttack(PossibleHeavyAttacks, CurrentHeavyAttackIndex, HeavyComboResetTimerHandle, HeavyComboResetTime, [this]() { CurrentHeavyAttackIndex = 0; }))
+	if (CanAttack() && BaseAttack(PossibleHeavyAttacks, CurrentHeavyAttackIndex, HeavyComboResetTimerHandle, HeavyComboResetTime, [this]() { CurrentHeavyAttackIndex = 0; }))
 	{
 		ActionState = EActionState::EAS_Attacking;
-	}
-}
-
-void AKnight::PlayAttackMontage(const int32& Selection)
-{
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && AttackMontage)
-	{
-		AnimInstance->Montage_Play(AttackMontage);
-		//const int32 Selection = FMath::RandRange(PossibleAttacks[0], PossibleAttacks[PossibleAttacks.Num() - 1]);
-		FName RandomAttack = FName();
-		switch (Selection)
-		{
-		case 0:
-			RandomAttack = FName("HorizontalAttack");
-			break;
-		case 1:
-			RandomAttack = FName("DownwardAttack");
-			break;
-		case 2:
-			RandomAttack = FName("UpwardAttack");
-			break;
-		case 3:
-			RandomAttack = FName("360Attack");
-			break;
-		default:
-			break;
-		}
-		AnimInstance->Montage_JumpToSection(RandomAttack, AttackMontage);
 	}
 }
 

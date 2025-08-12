@@ -5,6 +5,11 @@
 #include "Items/Weapons/Weapon.h"
 #include "TimerManager.h"
 #include "Components/AttributeComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "NiagaraFunctionLibrary.h"
+#include "Components/CapsuleComponent.h"
+#include "Components/AttributeComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -26,42 +31,76 @@ void ABaseCharacter::Tick(float DeltaTime)
 
 }
 
-bool ABaseCharacter::BaseAttack(TArray<int32>& PossibleAttacks, int32& CurrentAttackIndex, FTimerHandle& ComboResetTimerHandle, float ComboResetTime, TFunction<void()> ResetFunc)
+bool ABaseCharacter::BaseAttack(TArray<FName>& PossibleAttacks, int32& CurrentAttackIndex, FTimerHandle& ComboResetTimerHandle, float ComboResetTime, TFunction<void()> ResetFunc)
 {
-	if (CanAttack())
-	{
-		int32 SelectedAttack = PossibleAttacks[CurrentAttackIndex];
-		PlayAttackMontage(SelectedAttack);
+	FName SelectedAttack = PossibleAttacks[CurrentAttackIndex];
+	PlayAttackMontage(SelectedAttack);
 
-		CurrentAttackIndex = (CurrentAttackIndex + 1) % PossibleAttacks.Num();
+	CurrentAttackIndex = (CurrentAttackIndex + 1) % PossibleAttacks.Num();
 
-		GetWorldTimerManager().ClearTimer(ComboResetTimerHandle);
+	GetWorldTimerManager().ClearTimer(ComboResetTimerHandle);
 
-		// Create a dynamic delegate that captures ResetFunc
-		FTimerDelegate ResetDelegate;
-		ResetDelegate.BindLambda(ResetFunc);
-		GetWorldTimerManager().SetTimer(ComboResetTimerHandle, ResetDelegate, ComboResetTime, false);
-
-		return true;
-	}
-
-	return false;
+	// Create a dynamic delegate that captures ResetFunc
+	FTimerDelegate ResetDelegate;
+	ResetDelegate.BindLambda(ResetFunc);
+	GetWorldTimerManager().SetTimer(ComboResetTimerHandle, ResetDelegate, ComboResetTime, false);
+	return true;
 }
-
 
 bool ABaseCharacter::CanAttack()
 {
 	return false;
 }
 
-void ABaseCharacter::Die()
+bool ABaseCharacter::IsAlive()
 {
-
+	return Attributes && Attributes->IsAlive();
 }
 
-void ABaseCharacter::AttackEnd()
+void ABaseCharacter::PlayMontageSection(UAnimMontage* Montage, const FName& SectionName)
 {
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && Montage)
+	{
+		AnimInstance->Montage_Play(Montage);
+		AnimInstance->Montage_JumpToSection(SectionName, Montage);
+	}
+}
 
+int32 ABaseCharacter::PlayRandomMontageSection(UAnimMontage* Montage, const TArray<FName>& SectionNames)
+{
+	if (SectionNames.Num() <= 0) return -1;
+	const int32 MaxSectionIndex = SectionNames.Num() - 1;
+	const int32 Selection = FMath::RandRange(0, MaxSectionIndex);
+	PlayMontageSection(Montage, SectionNames[Selection]);
+	return Selection;
+}
+
+void ABaseCharacter::PlayAttackMontage(const FName& Selection)
+{
+	if (AttackMontageSections.Num() <= 0) return;
+
+	PlayMontageSection(AttackMontage, Selection);
+}
+
+int32 ABaseCharacter::PlayDeathMontage()
+{
+	return PlayRandomMontageSection(DeathMontage, DeathMontageSections);
+}
+
+void ABaseCharacter::HandleDamage(float DamageAmount)
+{
+	//UE_LOG(LogTemp, Warning, TEXT("Taking Damage"))
+	if (Attributes)
+	{
+		Attributes->RevieceDamage(DamageAmount);
+		//UE_LOG(LogTemp, Warning, TEXT("Damage Amount: %f"), DamageAmount)
+	}
+}
+
+void ABaseCharacter::DisableCapsule()
+{
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void ABaseCharacter::DirectionalHitReact(const FVector& ImpactPoint)
@@ -101,11 +140,6 @@ void ABaseCharacter::DirectionalHitReact(const FVector& ImpactPoint)
 	LaunchCharacter(PushDirection * PushStrength, true, true);
 }
 
-void ABaseCharacter::PlayAttackMontage(const int32& Selection)
-{
-
-}
-
 void ABaseCharacter::PlayHitReactMontage(const FName& SelectionName)
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -116,6 +150,24 @@ void ABaseCharacter::PlayHitReactMontage(const FName& SelectionName)
 	}
 }
 
+void ABaseCharacter::HitFX(const FVector& ImpactPoint)
+{
+	if (HitSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, HitSound, ImpactPoint);
+	}
+
+	if (HitParticles)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitParticles, ImpactPoint, UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ImpactPoint));
+	}
+
+	if (NiagaraHitParticles)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, NiagaraHitParticles, ImpactPoint, UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ImpactPoint));
+	}
+}
+
 void ABaseCharacter::SetWeaponCanDamage(bool state)
 {
 	if (EquippedWeapon)
@@ -123,4 +175,14 @@ void ABaseCharacter::SetWeaponCanDamage(bool state)
 		EquippedWeapon->EmptyIgnoreActors();
 		EquippedWeapon->SetCanDamage(state);
 	}
+}
+
+void ABaseCharacter::AttackEnd()
+{
+
+}
+
+void ABaseCharacter::Die()
+{
+
 }
