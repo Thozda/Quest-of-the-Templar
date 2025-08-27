@@ -9,6 +9,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/AttributeComponent.h"
+#include "Slash_UdemyRPG/DebugMacros.h"
 #include "Kismet/KismetMathLibrary.h"
 
 ABaseCharacter::ABaseCharacter()
@@ -16,6 +17,8 @@ ABaseCharacter::ABaseCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 
 	Attributes = CreateDefaultSubobject<UAttributeComponent>(TEXT("Attributes"));
+
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 
 }
 
@@ -33,6 +36,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 
 bool ABaseCharacter::BaseAttack(TArray<FName>& PossibleAttacks, int32& CurrentAttackIndex, FTimerHandle& ComboResetTimerHandle, float ComboResetTime, TFunction<void()> ResetFunc)
 {
+	if (PossibleAttacks.Num() <= 0) return false;
 	FName SelectedAttack = PossibleAttacks[CurrentAttackIndex];
 	PlayAttackMontage(SelectedAttack);
 
@@ -88,6 +92,17 @@ int32 ABaseCharacter::PlayDeathMontage()
 	return PlayRandomMontageSection(DeathMontage, DeathMontageSections);
 }
 
+void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
+{
+	if (IsAlive() && Hitter)
+	{
+		DirectionalHitReact(Hitter->GetActorLocation());
+	}
+	else Die();
+
+	HitFX(ImpactPoint);
+}
+
 void ABaseCharacter::HandleDamage(float DamageAmount)
 {
 	//UE_LOG(LogTemp, Warning, TEXT("Taking Damage"))
@@ -136,6 +151,7 @@ void ABaseCharacter::DirectionalHitReact(const FVector& ImpactPoint)
 	PlayHitReactMontage(Section);
 
 	const FVector PushDirection = -ToHit;
+	//DRAW_VECTOR_ARROW(GetActorLocation(), GetActorLocation() + PushDirection.GetSafeNormal() * 100.f);
 	const float PushStrength = 700.f;
 	LaunchCharacter(PushDirection * PushStrength, true, true);
 }

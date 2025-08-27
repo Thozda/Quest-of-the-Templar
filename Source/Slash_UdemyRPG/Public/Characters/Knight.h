@@ -21,17 +21,13 @@ class SLASH_UDEMYRPG_API AKnight : public ABaseCharacter
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	AKnight();
 
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
+
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	UPROPERTY(BlueprintReadWrite)
@@ -65,37 +61,21 @@ protected:
 	UInputAction* HeavyAttackAction;
 
 	//
-	//Callbacks For Input
-	//
-	void Move(const FInputActionValue& Value);
-	void Look(const FInputActionValue& Value);
-	void Jump(const FInputActionValue& Value);
-	void Equip(const FInputActionValue& Value);
-	void LightAttack(const FInputActionValue& Value);
-	void HeavyAttack(const FInputActionValue& Value);
-
-	//
 	//Anim Montages
 	//
-	void PlayArmMontage(const FName& SelectionName);
-	
 	virtual void AttackEnd() override;
 
-	virtual bool CanAttack() override;
-
-	bool KnightIsFalling();
-
-	bool CanDisarm();
-	bool CanArm();
+	UFUNCTION(BlueprintCallable)
+	void AttachWeaponToBack();
 
 	UFUNCTION(BlueprintCallable)
-	void Disarm();
-
-	UFUNCTION(BlueprintCallable)
-	void Arm();
+	void AttachWeaponToHand();
 
 	UFUNCTION(BlueprintCallable)
 	void FinishedArming();
+
+	UFUNCTION(BlueprintCallable)
+	void HitReactEnd();
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TArray<FName> PossibleLightAttacks;
@@ -106,6 +86,11 @@ protected:
 private:
 	ECharacterState CharacterState = ECharacterState::ECS_UnEquipped;
 
+	bool KnightIsFalling();
+
+	//
+	//Components
+	//
 	UPROPERTY(VisibleAnywhere)
 	USpringArmComponent* SpringArm;
 
@@ -116,14 +101,34 @@ private:
 	AItem* OverlappingItem;
 
 	//
+	//Callbacks For Input
+	//
+	void Move(const FInputActionValue& Value);
+	void Look(const FInputActionValue& Value);
+	void Jump(const FInputActionValue& Value);
+	void Equip(const FInputActionValue& Value);
+	void LightAttack(const FInputActionValue& Value);
+	void HeavyAttack(const FInputActionValue& Value);
+
+	//
 	//Animation Montages
 	//
+	void PlayArmMontage(const FName& SelectionName);
+
+	bool CanDisarm();
+	bool CanArm();
+	void Disarm();
+	void Arm();
+
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* ArmMontage;
 
 	//
 	//Attack
 	//
+	virtual bool CanAttack() override;
+	void EquipWeapon(AWeapon* Weapon);
+
 	int32 CurrentLightAttackIndex = 0;
 	int32 CurrentHeavyAttackIndex = 0;
 
@@ -132,6 +137,10 @@ private:
 
 	FTimerHandle LightComboResetTimerHandle;
 	FTimerHandle HeavyComboResetTimerHandle;
+
+	//
+	//Damage
+	//
 
 public:
 	FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }

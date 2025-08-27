@@ -31,16 +31,6 @@ protected:
 	virtual void BeginPlay() override;
 
 	//
-	//Pickup
-	//
-	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
-	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;
-
-	//
-	//Damage
-	//
-
-	//
 	//Physics
 	//
 	UFUNCTION(BlueprintImplementableEvent)
@@ -49,19 +39,24 @@ private:
 	//
 	//Pickup
 	//
+	void PlayEquipSound();
+	void DisableSphereCollision();
+	void DeactivateLootParticles();
+
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	USoundBase* EquipSound;
 
 	//
 	//Damage
 	//
+	void WeaponBoxTrace();
+	void DealDamage();
+	void ExecuteGetHit();
+
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	float Damage = 20.f;
 
 	FHitResult BoxHit;
-
-	void WeaponBoxTrace();
-	void DealDamage();
 
 	UPROPERTY(VisibleAnywhere)
 	USceneComponent* BoxTraceStart;
@@ -69,9 +64,13 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	USceneComponent* BoxTraceEnd;
 
-	TArray<AActor*> IgnoreActors;
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	FVector BoxTraceSize = FVector(15.f);
 
-	int hits = 0;
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	bool bShowBoxDebug = false;
+
+	TArray<AActor*> IgnoreActors;
 
 	bool bCanDamage = false;
 

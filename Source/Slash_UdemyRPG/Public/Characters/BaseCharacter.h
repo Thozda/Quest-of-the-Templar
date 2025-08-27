@@ -22,8 +22,6 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
-	UFUNCTION(BlueprintCallable)
-	void SetWeaponCanDamage(bool state);
 
 protected:
 	virtual void BeginPlay() override;
@@ -35,6 +33,9 @@ protected:
 	virtual bool BaseAttack(TArray<FName>& PossibleAttacks, int32& CurrentAttackIndex, FTimerHandle& ComboResetTimerHandle, float ComboResetTime, TFunction<void()> ResetFunc);
 
 	UFUNCTION(BlueprintCallable)
+	void SetWeaponCanDamage(bool state);
+
+	UFUNCTION(BlueprintCallable)
 	virtual void AttackEnd();
 
 	virtual void Die();
@@ -42,17 +43,13 @@ protected:
 	//
 	//Damage
 	//
-	UPROPERTY(VisibleAnywhere, Category = Weapon)
-	AWeapon* EquippedWeapon;
-
+	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
+	void DirectionalHitReact(const FVector& ImpactPoint);
 	virtual void HandleDamage(float DamageAmount);
-
 	void DisableCapsule();
 
-	//
-	//Hit
-	//
-	void DirectionalHitReact(const FVector& ImpactPoint);
+	UPROPERTY(VisibleAnywhere, Category = Weapon)
+	AWeapon* EquippedWeapon;
 
 	//
 	//Attributes
@@ -65,15 +62,24 @@ protected:
 	//
 	//Anim Montages
 	//
+	virtual void PlayHitReactMontage(const FName& SelectionName);
+	virtual int32 PlayDeathMontage();
+
+	//
+	//VFX
+	//
+	void HitFX(const FVector& ImpactPoint);
+
+private:
+	//
+	//Anim Montages
+	//
 	void PlayMontageSection(UAnimMontage* Montage, const FName& SectionName);
 	int32 PlayRandomMontageSection(UAnimMontage* Montage, const TArray<FName>& SectionNames);
-
 	virtual void PlayAttackMontage(const FName& Selection);
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* AttackMontage;
-
-	virtual void PlayHitReactMontage(const FName& SelectionName);
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* HitReactMontage;
@@ -87,8 +93,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TArray<FName> DeathMontageSections;
 
-	virtual int32 PlayDeathMontage();
-
 	//
 	//VFX
 	//
@@ -101,9 +105,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Sounds)
 	USoundBase* HitSound;
 
-	void HitFX(const FVector& ImpactPoint);
-
-private:
 	int32 AttackIndex;
 	FORCEINLINE void ResetAttackIndex(int32& Index) { Index = 0; };
 };

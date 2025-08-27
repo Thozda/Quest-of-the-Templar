@@ -74,7 +74,7 @@ void ABreakableActor::SpawnTreasure()
 	}
 }
 
-void ABreakableActor::GetHit_Implementation(const FVector& ImpactPoint)
+void ABreakableActor::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 {
 	if (bHit) return;
 	bHit = true;

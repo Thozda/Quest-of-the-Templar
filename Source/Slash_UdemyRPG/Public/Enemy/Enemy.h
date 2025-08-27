@@ -22,14 +22,14 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
-
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	
+	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 
 protected:
 	virtual void BeginPlay() override;
 
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
 
 	//
@@ -51,14 +51,16 @@ protected:
 	TEnumAsByte<EDeathPose> DeathPose;
 
 private:
+	void InitializeEnemy();
+
 	//
 	//Attributes
 	//
+	void SetHealthBarVisibility(bool Visibility);
+	void SetHealthBarPercent();
+
 	UPROPERTY(VisibleAnywhere)
 	UHealthBarComponent* HealthBarWidget;
-
-	void SetHealthBarVisibility(bool Visibility);
-
 
 	//
 	//AI Navigation
@@ -88,10 +90,10 @@ private:
 	FTimerHandle PatrolTimer;
 
 	UPROPERTY(EditAnywhere, Category = "AI Navigation")
-	float WaitMin = 5.f;
+	float PatrolWaitMin = 5.f;
 
 	UPROPERTY(EditAnywhere, Category = "AI Navigation")
-	float WaitMax = 10.f;
+	float PatrolWaitMax = 10.f;
 
 	UPROPERTY(EditAnywhere, Category = "AI Navigation")
 	float PatrollingSpeed = 100.f;
@@ -115,10 +117,17 @@ private:
 	//
 	//AI Combat
 	//
+	void SpawnDefaultWeapon();
+	void CheckCombatTarget();
+	bool InTargetRange(AActor* Target, double Radius);
+	virtual bool CanAttack() override;
+	void Attack();
+	void StartAttackTimer();
+	void LoseInterest();
+	virtual void Destroyed() override;
+
 	UPROPERTY()
 	AActor* CombatTarget;
-
-	bool InTargetRange(AActor* Target, double Radius);
 
 	UPROPERTY(EditAnywhere)
 	double CombatRadius = 2000.f;
@@ -126,13 +135,17 @@ private:
 	UPROPERTY(EditAnywhere)
 	double AttackRadius = 150.f;
 
-	void CheckCombatTarget();
+	UPROPERTY(EditAnywhere, Category = Combat)
+	TArray<TSubclassOf<AWeapon>> WeaponClasses;
 
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<AWeapon> WeaponClass;
+	UPROPERTY(EditAnywhere, Category = Combat)
+	FName WeaponSocket;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	FTimerHandle AttackTimer;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	FTimerHandle AttackResetTimer;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	float AttackMin = 0.5f;
@@ -141,13 +154,10 @@ private:
 	float AttackMax = 1.f;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
+	float AttackResetTime = 2.f;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
 	float DeathLifeSpan = 60.f;
-
-	virtual void Destroyed() override;
-
-	virtual bool CanAttack() override;
-
-	void LoseInterest();
 
 	int32 CurrentAttackIndex = 0;
 
@@ -155,16 +165,9 @@ private:
 
 	FTimerHandle ComboResetTimerHandle;
 
-	void Attack();
-	void StartAttackTimer();
-
 	FORCEINLINE void ClearAttackTimer() { GetWorldTimerManager().ClearTimer(AttackTimer); }
 	FORCEINLINE bool IsDead() { return EnemyState == EEnemyState::EES_Dead; }
 	FORCEINLINE bool IsEngaged() { return EnemyState == EEnemyState::EES_Engaged; }
-
-	//
-	//Anim Montages
-	//
 
 public:	
 
