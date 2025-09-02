@@ -169,7 +169,14 @@ void AEnemy::ChaseTarget()
 {
 	EnemyState = EEnemyState::EES_Chasing;
 	GetCharacterMovement()->MaxWalkSpeed = ChasingSpeed;
-	MoveToTarget(CombatTarget);
+	if (CombatTarget)
+	{
+		MoveToTarget(CombatTarget);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No Combat Target"))
+	}
 }
 
 bool AEnemy::InTargetRange(AActor* Target, double Radius)
@@ -220,12 +227,7 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 	HandleDamage(DamageAmount);
 
 	CombatTarget = EventInstigator->GetPawn();
-
-	if (EnemyState == EEnemyState::EES_Patrolling)
-	{
-		ChaseTarget();
-	}
-
+	EnemyState = EEnemyState::EES_NoState;
 	return DamageAmount;
 }
 
@@ -244,6 +246,14 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 	Super::GetHit_Implementation(ImpactPoint, Hitter);
 	if (!IsDead()) SetHealthBarVisibility(true);
 	GetWorldTimerManager().ClearTimer(PatrolTimer);
+	GetWorldTimerManager().ClearTimer(AttackTimer);
+	StopAttackMontage();
+	SetWeaponCanDamage(false);
+}
+
+void AEnemy::HitReactEnd()
+{
+	CheckCombatTarget();
 }
 
 void AEnemy::Die()

@@ -74,8 +74,7 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void FinishedArming();
 
-	UFUNCTION(BlueprintCallable)
-	void HitReactEnd();
+	virtual void HitReactEnd() override;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TArray<FName> PossibleLightAttacks;

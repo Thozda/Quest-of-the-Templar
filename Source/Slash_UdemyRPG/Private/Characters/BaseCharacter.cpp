@@ -87,6 +87,42 @@ void ABaseCharacter::PlayAttackMontage(const FName& Selection)
 	PlayMontageSection(AttackMontage, Selection);
 }
 
+void ABaseCharacter::StopAttackMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance)
+	{
+		AnimInstance->Montage_Stop(0.25f, AttackMontage);
+	}
+}
+
+FVector ABaseCharacter::GetTranslationWarpTarget()
+{
+	if (CombatTarget == nullptr) return FVector();
+	
+	const FVector CombatTargetLoctaion = CombatTarget->GetActorLocation();
+	const FVector Location = GetActorLocation();
+
+	FVector TargetToMe = (Location - CombatTargetLoctaion).GetSafeNormal();
+	TargetToMe *= WarpTargetDistance;
+
+	return CombatTargetLoctaion + TargetToMe;
+}
+
+FVector ABaseCharacter::GetRotationWarpTarget()
+{
+	if (CombatTarget)
+	{
+		return CombatTarget->GetActorLocation();
+	}
+	return FVector();
+}
+
+void ABaseCharacter::HitReactEnd()
+{
+
+}
+
 int32 ABaseCharacter::PlayDeathMontage()
 {
 	return PlayRandomMontageSection(DeathMontage, DeathMontageSections);

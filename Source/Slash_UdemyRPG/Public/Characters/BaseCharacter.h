@@ -40,6 +40,12 @@ protected:
 
 	virtual void Die();
 
+	UPROPERTY(BlueprintReadOnly, Category = Combat)
+	AActor* CombatTarget;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	double WarpTargetDistance = 75.f;
+
 	//
 	//Damage
 	//
@@ -62,8 +68,18 @@ protected:
 	//
 	//Anim Montages
 	//
+	void StopAttackMontage();
 	virtual void PlayHitReactMontage(const FName& SelectionName);
 	virtual int32 PlayDeathMontage();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void HitReactEnd();
+
+	UFUNCTION(BlueprintCallable)
+	FVector GetTranslationWarpTarget();
+
+	UFUNCTION(BlueprintCallable)
+	FVector GetRotationWarpTarget();
 
 	//
 	//VFX

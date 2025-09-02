@@ -46,6 +46,7 @@ protected:
 	virtual void Die() override;
 	virtual int32 PlayDeathMontage() override;
 	virtual void HandleDamage(float DamageAmount) override;
+	virtual void HitReactEnd() override;
 
 	UPROPERTY(BlueprintReadOnly)
 	TEnumAsByte<EDeathPose> DeathPose;
@@ -125,9 +126,6 @@ private:
 	void StartAttackTimer();
 	void LoseInterest();
 	virtual void Destroyed() override;
-
-	UPROPERTY()
-	AActor* CombatTarget;
 
 	UPROPERTY(EditAnywhere)
 	double CombatRadius = 2000.f;
