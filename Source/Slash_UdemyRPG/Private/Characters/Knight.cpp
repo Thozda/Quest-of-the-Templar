@@ -243,3 +243,9 @@ void AKnight::HitReactEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
 }
+
+float AKnight::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
+{
+	HandleDamage(DamageAmount);
+	return DamageAmount;
+}
