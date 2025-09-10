@@ -20,25 +20,15 @@ class SLASH_UDEMYRPG_API AWeapon : public AItem
 public:
 	AWeapon();
 
+	virtual void Tick(float DeltaTime) override;
+
 	//
 	//Pickup
 	//
-	void Equip(USceneComponent* InParent, FName InSocket);
+	void Equip(USceneComponent* InParent, FName InSocket, AActor* NewOwner, APawn* NewInstigator);
 	void AttachMeshToSocket(USceneComponent* InParent, const FName& InSocket);
 protected:
 	virtual void BeginPlay() override;
-
-	//
-	//Pickup
-	//
-	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
-	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;
-
-	//
-	//Damage
-	//
-	UFUNCTION()
-	void OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	//
 	//Physics
@@ -49,14 +39,27 @@ private:
 	//
 	//Pickup
 	//
+	void PlayEquipSound();
+	void DisableSphereCollision();
+	void DeactivateLootParticles();
+
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	USoundBase* EquipSound;
 
 	//
 	//Damage
 	//
+	void WeaponBoxTrace();
+	void DealDamage();
+	void ExecuteGetHit();
+
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
-	UBoxComponent* WeaponBox;
+	float Damage;
+
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	float BaseDamage = 25.f;
+
+	FHitResult BoxHit;
 
 	UPROPERTY(VisibleAnywhere)
 	USceneComponent* BoxTraceStart;
@@ -64,9 +67,20 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	USceneComponent* BoxTraceEnd;
 
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	FVector BoxTraceSize = FVector(15.f);
+
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	bool bShowBoxDebug = false;
+
 	TArray<AActor*> IgnoreActors;
 
+	bool bCanDamage = false;
+
 public:
-	FORCEINLINE UBoxComponent* GetWeaponBox() const { return WeaponBox; }
 	FORCEINLINE void EmptyIgnoreActors() { IgnoreActors.Empty(); }
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE void SetCanDamage(bool state) { bCanDamage = state; }
+	FORCEINLINE float GetBaseDamage() const { return BaseDamage; }
+	FORCEINLINE void SetDamageAmount(float Amount) { Damage = Amount; }
 };

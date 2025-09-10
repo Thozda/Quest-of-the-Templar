@@ -8,6 +8,7 @@
 #include "BreakableActor.generated.h"
 
 class UGeometryCollectionComponent;
+class USoundBase;
 
 UCLASS()
 class SLASH_UDEMYRPG_API ABreakableActor : public AActor, public IHitInterface
@@ -21,7 +22,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
+	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 
 protected:
 	// Called when the game starts or when spawned
@@ -29,6 +30,23 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	UGeometryCollectionComponent* GeometryCollection;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	class UCapsuleComponent* Capsule;
+
 private:	
 	
+	UPROPERTY(EditAnywhere, Category = "Breakable Properties")
+	TArray<TSubclassOf<class ATreasure>> TreasureClasses;
+
+	UPROPERTY(EditAnywhere, Category = "Breakable Properties")
+	USoundBase* BreakSound;
+
+	UFUNCTION()
+	void OnBreak(const FChaosBreakEvent& BreakEvent);
+
+	void SpawnTreasure();
+
+	bool bBroken = false;
+	bool bHit = false;
 };

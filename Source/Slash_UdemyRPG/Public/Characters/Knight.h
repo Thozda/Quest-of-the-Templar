@@ -3,40 +3,41 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
+#include "BaseCharacter.h"
 #include "InputActionValue.h"
-#include "CharacterTypes.h"
+#include "Interfaces/PickupInterface.h"
 #include "Knight.generated.h"
 
 class UInputMappingContext;
 class UInputAction;
 class USpringArmComponent;
 class UCameraComponent;
+class UMainOverlay;
 class AItem;
 class UAnimMontage;
 class USoundBase;
-class AWeapon;
+class ASoul;
+class ATreasure;
 
 UCLASS()
-class SLASH_UDEMYRPG_API AKnight : public ACharacter
+class SLASH_UDEMYRPG_API AKnight : public ABaseCharacter, public IPickupInterface
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	AKnight();
 
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	UFUNCTION(BlueprintCallable)
-	void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
+	virtual void Tick(float DeltaTime) override; 
+	
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+		class AController* EventInstigator, AActor* DamageCauser) override;
+	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
+	virtual void SetOverlappingItem(AItem* Item) override;
+	virtual void AddSouls(ASoul* Soul) override;
+	virtual void AddGold(ATreasure* Treasure) override;
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	UPROPERTY(BlueprintReadWrite)
@@ -48,7 +49,6 @@ protected:
 	//
 	//Enhanced Input Variables
 	//
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputMappingContext* KnightMappingContext;
 
@@ -65,46 +65,67 @@ protected:
 	UInputAction* EquipAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
-	UInputAction* AttackAction;
+	UInputAction* LightAttackAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
+	UInputAction* HeavyAttackAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
+	UInputAction* DodgeAction;
 
 	//
-	//Callbacks For Input
+	//Anim Montages
 	//
-
-	void Move(const FInputActionValue& Value);
-	void Look(const FInputActionValue& Value);
-	void Jump(const FInputActionValue& Value);
-	void Equip(const FInputActionValue& Value);
-	void Attack(const FInputActionValue& Value);
-
-	//
-	//Play Montage Functions
-	//
-
-	void PlayAttackMontage();
-	void PlayArmMontage(const FName& SelectionName);
-	
-	UFUNCTION(BlueprintCallable)
-	void AttackEnd();
-
-	bool CanAttack();
-	bool KnightIsFalling();
-
-	bool CanDisarm();
-	bool CanArm();
+	virtual void AttackEnd() override;
+	virtual void DodgeEnd() override;
 
 	UFUNCTION(BlueprintCallable)
-	void Disarm();
+	void AttachWeaponToBack();
 
 	UFUNCTION(BlueprintCallable)
-	void Arm();
+	void AttachWeaponToHand();
 
 	UFUNCTION(BlueprintCallable)
 	void FinishedArming();
 
+	virtual void HitReactEnd() override;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	TArray<FName> PossibleLightAttacks;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	TArray<FName> PossibleHeavyAttacks;
+
+	//
+	//Attack
+	//
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float LightDamageMultiplier = 0.8;
+	
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float HeavyDamageMultiplier = 1.2f;
+	
+	//
+	//Damage
+	//
+	 
+	virtual void Die_Implementation() override;
+	virtual int32 PlayDeathMontage() override;
+
+	UPROPERTY(BlueprintReadOnly)
+	TEnumAsByte<ECharacterDeathPose> CharacterDeathPose;
+
+
 private:
 	ECharacterState CharacterState = ECharacterState::ECS_UnEquipped;
 
+	void InitialiseEnhancedInput(APlayerController* PlayerController);
+
+	bool KnightIsFalling();
+
+	//
+	//Components
+	//
 	UPROPERTY(VisibleAnywhere)
 	USpringArmComponent* SpringArm;
 
@@ -114,20 +135,61 @@ private:
 	UPROPERTY(VisibleInstanceOnly)
 	AItem* OverlappingItem;
 
-	UPROPERTY(VisibleAnywhere, Category = Weapon)
-	AWeapon* EquippedWeapon;
+	//
+	//Overlay
+	//
+	void InitialiseOverlay(APlayerController* PlayerController);
+	void SetHUDHealth();
+
+	UPROPERTY()
+	UMainOverlay* Overlay;
+
+	//
+	//Callbacks For Input
+	//
+	void Move(const FInputActionValue& Value);
+	void Look(const FInputActionValue& Value);
+	void Jump(const FInputActionValue& Value);
+	void Equip(const FInputActionValue& Value);
+	void LightAttack(const FInputActionValue& Value);
+	void HeavyAttack(const FInputActionValue& Value);
+	void Dodge(const FInputActionValue& Value);
 
 	//
 	//Animation Montages
 	//
-	
-	UPROPERTY(EditDefaultsOnly, Category = Montages)
-	UAnimMontage* AttackMontage;
+	void PlayArmMontage(const FName& SelectionName);
+
+	bool CanDisarm();
+	bool CanArm();
+	void Disarm();
+	void Arm();
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* ArmMontage;
 
+	//
+	//Attack
+	//
+	virtual bool CanAttack() override;
+	void EquipWeapon(AWeapon* Weapon);
+
+	int32 CurrentLightAttackIndex = 0;
+	int32 CurrentHeavyAttackIndex = 0;
+
+	float LightComboResetTime = 5.f;
+	float HeavyComboResetTime = 5.f;
+
+	FTimerHandle LightComboResetTimerHandle;
+	FTimerHandle HeavyComboResetTimerHandle;
+
+	//
+	//Damage
+	//
+
 public:
-	FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
+	FORCEINLINE void SetActionState(EActionState state) { ActionState = state; }
+	FORCEINLINE EActionState GetActionState() const { return ActionState; }
+	FORCEINLINE TEnumAsByte<ECharacterDeathPose> GetCharacterDeathPose() const { return CharacterDeathPose; }
 };

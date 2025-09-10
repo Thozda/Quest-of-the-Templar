@@ -3,62 +3,178 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
-#include "Interfaces/HitInterface.h"
+#include "Characters/BaseCharacter.h"
+#include "Characters/CharacterTypes.h"
 #include "Enemy.generated.h"
 
-class UAnimMontage;
-class UNiagaraSystem;
+class UHealthBarComponent;
+class AAIController;
+class UPawnSensingComponent;
+class AWeapon;
+class ASoul;
 
 UCLASS()
-class SLASH_UDEMYRPG_API AEnemy : public ACharacter, public IHitInterface
+class SLASH_UDEMYRPG_API AEnemy : public ABaseCharacter
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	AEnemy();
 
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
-
-	void DirectionalHitReact(const FVector& ImpactPoint);
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+		class AController* EventInstigator, AActor* DamageCauser) override;
+	
+	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	//
-	//Play Montage Functions
-	//
-	void PlayHitReactMontage(const FName& SelectionName);
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
 
 	//
-	//VFX
+	//Attacks
 	//
-	UPROPERTY(EditAnywhere, Category = VisualEffects)
-	UParticleSystem* HitParticles;
+	virtual void AttackEnd() override;
+	virtual void LoseInterest() override;
 
-	UPROPERTY(EditAnywhere, Category = VisualEffects)
-	UNiagaraSystem* NiagaraHitParticles;
+	UPROPERTY(EditAnywhere, Category = Combat)
+	TArray<FName> PossibleAttacks;
+
+	//
+	//Death
+	//
+	virtual void Die_Implementation() override;
+	virtual void HandleDamage(float DamageAmount) override;
+	virtual void HitReactEnd() override;
 
 private:
-	//
-	//Animation Montages
-	//
-	UPROPERTY(EditDefaultsOnly, Category = Montages)
-	UAnimMontage* HitReactMontage;
+	void InitializeEnemy();
 
 	//
-	//SFX
+	//Attributes
 	//
-	UPROPERTY(EditAnywhere, Category = Sounds)
-	USoundBase* HitSound;
+	void SetHealthBarVisibility(bool Visibility);
+	void SetHealthBarPercent();
+
+	UPROPERTY(VisibleAnywhere)
+	UHealthBarComponent* HealthBarWidget;
+
+	//
+	//Souls
+	//
+	void SpawnSoul();
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	TSubclassOf<ASoul> SoulClass;
+
+	//
+	//AI Navigation
+	//
+	UPROPERTY()
+	AAIController* EnemyController;
+
+	//Current Patrol Target
+	UPROPERTY(EditInstanceOnly, Category = "AI Navigation")
+	AActor* PatrolTarget;
+
+	//Possible Targets
+	UPROPERTY(EditInstanceOnly, Category = "AI Navigation")
+	TArray<AActor*> PatrolTargets;
+
+	UPROPERTY(EditAnywhere)
+	double PatrolRadius = 150.f;
+
+	int32 PatrolPointIndex = 0;
+
+	UPROPERTY(VisibleAnywhere)
+	UPawnSensingComponent* PawnSensing;
+
+	UFUNCTION()
+	void PawnSeen(APawn* SeenPawn);
+
+	FTimerHandle PatrolTimer;
+
+	UPROPERTY(EditAnywhere, Category = "AI Navigation")
+	float PatrolWaitMin = 5.f;
+
+	UPROPERTY(EditAnywhere, Category = "AI Navigation")
+	float PatrolWaitMax = 10.f;
+
+	UPROPERTY(EditAnywhere, Category = "AI Navigation")
+	float PatrollingSpeed = 100.f;
+
+	UPROPERTY(EditAnywhere, Category = "AI Navigation")
+	float ChasingSpeed = 300.f;
+
+	void StartPatrolling();
+	void PatrolTimerFinished();
+	void MoveToTarget(AActor* Target);
+	bool NewPatrolTarget();
+	void CheckPatrolTarget();
+	void ChaseTarget();
+
+	FORCEINLINE bool IsOutsideCombatRadius() { return !InTargetRange(CombatTarget, CombatRadius); }
+	FORCEINLINE bool IsOutsideAttackRadius() { return !InTargetRange(CombatTarget, AttackRadius); }
+	FORCEINLINE bool IsInsideAttackRadius() { return InTargetRange(CombatTarget, AttackRadius); }
+	FORCEINLINE bool IsChasing() { return EnemyState == EEnemyState::EES_Chasing; }
+	FORCEINLINE bool IsAttacking() { return EnemyState == EEnemyState::EES_Attacking; }
+
+	//
+	//AI Combat
+	//
+	void SpawnDefaultWeapon();
+	void CheckCombatTarget();
+	bool InTargetRange(AActor* Target, double Radius);
+	virtual bool CanAttack() override;
+	void Attack();
+	void StartAttackTimer();
+	virtual void Destroyed() override;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	double CombatRadius = 2000.f;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	double AttackRadius = 150.f;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float AcceptanceRadius = 60.f;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	TArray<TSubclassOf<AWeapon>> WeaponClasses;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	FName WeaponSocket;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	FTimerHandle AttackTimer;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	FTimerHandle AttackResetTimer;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float AttackMin = 0.5f;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float AttackMax = 1.f;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float AttackResetTime = 2.f;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float DeathLifeSpan = 60.f;
+
+	int32 CurrentAttackIndex = 0;
+
+	float ComboResetTime = 5.f;
+
+	FTimerHandle ComboResetTimerHandle;
+
+	FORCEINLINE void ClearAttackTimer() { GetWorldTimerManager().ClearTimer(AttackTimer); }
+	FORCEINLINE bool IsDead() { return EnemyState == EEnemyState::EES_Dead; }
+	FORCEINLINE bool IsEngaged() { return EnemyState == EEnemyState::EES_Engaged; }
 
 public:	
 
