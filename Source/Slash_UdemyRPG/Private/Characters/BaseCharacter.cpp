@@ -34,7 +34,8 @@ void ABaseCharacter::Tick(float DeltaTime)
 
 }
 
-bool ABaseCharacter::BaseAttack(TArray<FName>& PossibleAttacks, int32& CurrentAttackIndex, FTimerHandle& ComboResetTimerHandle, float ComboResetTime, TFunction<void()> ResetFunc)
+bool ABaseCharacter::BaseAttack(TArray<FName>& PossibleAttacks, int32& CurrentAttackIndex,
+	FTimerHandle& ComboResetTimerHandle, float ComboResetTime, TFunction<void()> ResetFunc)
 {
 	if (PossibleAttacks.Num() <= 0) return false;
 
@@ -177,7 +178,7 @@ void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* H
 	{
 		DirectionalHitReact(Hitter->GetActorLocation());
 	}
-	else Die();
+	else Die_Implementation();
 
 	HitFX(ImpactPoint);
 }
@@ -254,12 +255,14 @@ void ABaseCharacter::HitFX(const FVector& ImpactPoint)
 
 	if (HitParticles)
 	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitParticles, ImpactPoint, UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ImpactPoint));
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitParticles, ImpactPoint,
+			UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ImpactPoint));
 	}
 
 	if (NiagaraHitParticles)
 	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, NiagaraHitParticles, ImpactPoint, UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ImpactPoint));
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, NiagaraHitParticles, ImpactPoint,
+			UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ImpactPoint));
 	}
 }
 
@@ -277,7 +280,7 @@ void ABaseCharacter::AttackEnd()
 
 }
 
-void ABaseCharacter::Die()
+void ABaseCharacter::Die_Implementation()
 {
 	Tags.Add(FName("Dead"));
 	PlayDeathMontage();

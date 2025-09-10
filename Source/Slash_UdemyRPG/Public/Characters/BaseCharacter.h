@@ -30,7 +30,8 @@ protected:
 	//Attack
 	//
 	virtual bool CanAttack();
-	virtual bool BaseAttack(TArray<FName>& PossibleAttacks, int32& CurrentAttackIndex, FTimerHandle& ComboResetTimerHandle, float ComboResetTime, TFunction<void()> ResetFunc);
+	virtual bool BaseAttack(TArray<FName>& PossibleAttacks, int32& CurrentAttackIndex,
+		FTimerHandle& ComboResetTimerHandle, float ComboResetTime, TFunction<void()> ResetFunc);
 	virtual void LoseInterest();
 
 	UFUNCTION(BlueprintCallable)
@@ -61,7 +62,9 @@ protected:
 	void DirectionalHitReact(const FVector& ImpactPoint);
 	virtual void HandleDamage(float DamageAmount);
 	void DisableCapsule();
-	virtual void Die();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void Die();
 
 	UPROPERTY(BlueprintReadOnly)
 	TEnumAsByte<EDeathPose> DeathPose;

@@ -23,7 +23,8 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
-	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+		class AController* EventInstigator, AActor* DamageCauser) override;
 	
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 
@@ -45,7 +46,7 @@ protected:
 	//
 	//Death
 	//
-	virtual void Die() override;
+	virtual void Die_Implementation() override;
 	virtual void HandleDamage(float DamageAmount) override;
 	virtual void HitReactEnd() override;
 
@@ -64,7 +65,7 @@ private:
 	//
 	//Souls
 	//
-	void SpawnSoul() const;
+	void SpawnSoul();
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TSubclassOf<ASoul> SoulClass;
@@ -132,11 +133,14 @@ private:
 	void StartAttackTimer();
 	virtual void Destroyed() override;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = Combat)
 	double CombatRadius = 2000.f;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = Combat)
 	double AttackRadius = 150.f;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float AcceptanceRadius = 60.f;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TArray<TSubclassOf<AWeapon>> WeaponClasses;

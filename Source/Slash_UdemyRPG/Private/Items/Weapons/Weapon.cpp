@@ -28,6 +28,8 @@ AWeapon::AWeapon()
 void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
+
+	Damage = BaseDamage;
 }
 
 void AWeapon::Tick(float DeltaTime)
@@ -89,13 +91,16 @@ void AWeapon::WeaponBoxTrace()
 
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.AddUnique(this);
+	ActorsToIgnore.AddUnique(GetOwner());
 
 	for (AActor* Actor : IgnoreActors)
 	{
 		ActorsToIgnore.AddUnique(Actor);
 	}
 
-	UKismetSystemLibrary::BoxTraceSingle(this, Start, End, BoxTraceSize, BoxTraceStart->GetComponentRotation(), ETraceTypeQuery::TraceTypeQuery1, false, ActorsToIgnore,
+	UKismetSystemLibrary::BoxTraceSingle(this, Start, End, BoxTraceSize,
+		BoxTraceStart->GetComponentRotation(), ETraceTypeQuery::TraceTypeQuery1,
+		false, ActorsToIgnore,
 		bShowBoxDebug ? EDrawDebugTrace::ForDuration : EDrawDebugTrace::None, BoxHit, true);
 }
 
@@ -106,7 +111,8 @@ void AWeapon::DealDamage()
 	if (GetOwner()->ActorHasTag(TEXT("Enemy")) && BoxHit.GetActor()->ActorHasTag(TEXT("Enemy"))) return;
 	if (GetOwner()->ActorHasTag(TEXT("Knight")) && BoxHit.GetActor()->ActorHasTag(TEXT("Knight"))) return;
 
-	UGameplayStatics::ApplyDamage(BoxHit.GetActor(), Damage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
+	UGameplayStatics::ApplyDamage(BoxHit.GetActor(), Damage, GetInstigator()->GetController(),
+		this, UDamageType::StaticClass());
 	
 	ExecuteGetHit();
 

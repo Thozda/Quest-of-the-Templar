@@ -83,7 +83,8 @@ protected:
 
 	EItemState ItemState = EItemState::EIS_Hovering;
 
-private:
+public:
+	FORCEINLINE USphereComponent* GetSphere() const { return Sphere; }
 };
 
 template<typename T>

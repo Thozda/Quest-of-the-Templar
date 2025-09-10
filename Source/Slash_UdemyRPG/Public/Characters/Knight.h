@@ -30,7 +30,8 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void Tick(float DeltaTime) override; 
 	
-	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+		class AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 	virtual void SetOverlappingItem(AItem* Item) override;
 	virtual void AddSouls(ASoul* Soul) override;
@@ -99,16 +100,16 @@ protected:
 	//Attack
 	//
 	UPROPERTY(EditAnywhere, Category = Combat)
-	float LightDamage = 20;
+	float LightDamageMultiplier = 0.8;
 	
 	UPROPERTY(EditAnywhere, Category = Combat)
-	float HeavyDamage = 30;
+	float HeavyDamageMultiplier = 1.2f;
 	
 	//
 	//Damage
 	//
 	 
-	virtual void Die() override;
+	virtual void Die_Implementation() override;
 	virtual int32 PlayDeathMontage() override;
 
 	UPROPERTY(BlueprintReadOnly)

@@ -6,6 +6,7 @@
 
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/AttributeComponent.h"
+#include "Components/SphereComponent.h"
 #include "HUD/HealthBarComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/PawnSensingComponent.h"
@@ -94,7 +95,8 @@ void AEnemy::CheckPatrolTarget()
 {
 	if (InTargetRange(PatrolTarget, PatrolRadius) && !GetWorldTimerManager().IsTimerActive(PatrolTimer))
 	{
-		GetWorldTimerManager().SetTimer(PatrolTimer, this, &AEnemy::PatrolTimerFinished, FMath::RandRange(PatrolWaitMin, PatrolWaitMax));
+		GetWorldTimerManager().SetTimer(PatrolTimer, this, &AEnemy::PatrolTimerFinished,
+			FMath::RandRange(PatrolWaitMin, PatrolWaitMax));
 	}
 }
 
@@ -119,7 +121,8 @@ void AEnemy::CheckCombatTarget()
 
 void AEnemy::PawnSeen(APawn* SeenPawn)
 {
-	if (EnemyState == EEnemyState::EES_Patrolling && SeenPawn->ActorHasTag(FName("Knight")) && !SeenPawn->ActorHasTag(FName("Dead")))
+	if (EnemyState == EEnemyState::EES_Patrolling && SeenPawn->ActorHasTag(FName("Knight")) &&
+		!SeenPawn->ActorHasTag(FName("Dead")))
 	{
 		CombatTarget = SeenPawn;
 		GetWorldTimerManager().ClearTimer(PatrolTimer);
@@ -152,7 +155,7 @@ void AEnemy::MoveToTarget(AActor* Target)
 
 	FAIMoveRequest MoveRequest;
 	MoveRequest.SetGoalActor(Target);
-	MoveRequest.SetAcceptanceRadius(60.f);
+	MoveRequest.SetAcceptanceRadius(AcceptanceRadius);
 
 	EnemyController->MoveTo(MoveRequest);
 }
@@ -200,7 +203,8 @@ bool AEnemy::CanAttack()
 
 void AEnemy::Attack()
 {
-	if (BaseAttack(PossibleAttacks, CurrentAttackIndex, ComboResetTimerHandle, ComboResetTime, [this]() { CurrentAttackIndex = 0; } ))
+	if (BaseAttack(PossibleAttacks, CurrentAttackIndex, ComboResetTimerHandle, ComboResetTime,
+		[this]() { CurrentAttackIndex = 0; } ))
 	{
 		EnemyState = EEnemyState::EES_Engaged;
 
@@ -223,7 +227,8 @@ void AEnemy::AttackEnd()
 	GetWorldTimerManager().ClearTimer(AttackResetTimer);
 }
 
-float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
+float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator,
+	AActor* DamageCauser)
 {
 	HandleDamage(DamageAmount);
 
@@ -250,6 +255,7 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 	GetWorldTimerManager().ClearTimer(AttackTimer);
 	StopAttackMontage();
 	SetWeaponCanDamage(false);
+	//if (IsInsideAttackRadius() && !IsDead()) StartAttackTimer();
 }
 
 void AEnemy::HitReactEnd()
@@ -257,9 +263,9 @@ void AEnemy::HitReactEnd()
 	CheckCombatTarget();
 }
 
-void AEnemy::Die()
+void AEnemy::Die_Implementation()
 {
-	Super::Die();
+	Super::Die_Implementation();
 
 	EnemyState = EEnemyState::EES_Dead;
 
@@ -297,16 +303,19 @@ void AEnemy::SetHealthBarPercent()
 	}
 }
 
-void AEnemy::SpawnSoul() const
+void AEnemy::SpawnSoul()
 {
 	UWorld* World = GetWorld();
 	if (World && SoulClass && Attributes)
 	{
-		ASoul* SpawnedSoul = World->SpawnActor<ASoul>(SoulClass, GetActorLocation(), GetActorRotation());
+		const FVector SpawnLocation = GetActorLocation() + FVector(0.f, 0.f, 50.f);
+		ASoul* SpawnedSoul = World->SpawnActor<ASoul>(SoulClass, SpawnLocation, GetActorRotation());
 		if (SpawnedSoul)
 		{
 			int32 Souls = FMath::RandRange(Attributes->GetMinSouls(), Attributes->GetMaxSouls());
 			SpawnedSoul->SetSouls(Souls);
+			SpawnedSoul->SetOwner(this);
+			SpawnedSoul->GetSphere()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		}
 	}
 }

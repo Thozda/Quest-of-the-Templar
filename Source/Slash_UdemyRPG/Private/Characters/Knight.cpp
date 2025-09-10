@@ -75,7 +75,8 @@ void AKnight::BeginPlay()
 
 void AKnight::InitialiseEnhancedInput(APlayerController* PlayerController)
 {
-	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+	if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+		ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 	{
 		Subsystem->AddMappingContext(KnightMappingContext, 0);
 	}
@@ -203,6 +204,7 @@ void AKnight::Equip(const FInputActionValue& Value)
 	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
 	if (OverlappingWeapon)
 	{
+		if (EquippedWeapon) EquippedWeapon->Destroy();
 		EquipWeapon(OverlappingWeapon);
 	}
 	else
@@ -286,10 +288,12 @@ void AKnight::PlayArmMontage(const FName& SelectionName)
 void AKnight::LightAttack(const FInputActionValue& Value)
 {
 	if (Attributes && Attributes->GetStamina() < Attributes->GetLightAttackCost()) return;
-	if (CanAttack() && EquippedWeapon && Attributes && BaseAttack(PossibleLightAttacks, CurrentLightAttackIndex, LightComboResetTimerHandle, LightComboResetTime, [this]() { CurrentLightAttackIndex = 0; }))
+	if (CanAttack() && EquippedWeapon && Attributes && BaseAttack(PossibleLightAttacks, CurrentLightAttackIndex,
+		LightComboResetTimerHandle, LightComboResetTime, [this]() { CurrentLightAttackIndex = 0; }))
 	{
 		ActionState = EActionState::EAS_Attacking;
-		EquippedWeapon->SetDamageAmount(LightDamage);
+		float Damage = EquippedWeapon->GetBaseDamage() * LightDamageMultiplier;
+		EquippedWeapon->SetDamageAmount(Damage);
 		Attributes->UseStamina(Attributes->GetLightAttackCost());
 	}
 }
@@ -297,10 +301,12 @@ void AKnight::LightAttack(const FInputActionValue& Value)
 void AKnight::HeavyAttack(const FInputActionValue& Value)
 {
 	if (Attributes && Attributes->GetStamina() < Attributes->GetHeavyAttackCost()) return;
-	if (CanAttack() && EquippedWeapon && Attributes && BaseAttack(PossibleHeavyAttacks, CurrentHeavyAttackIndex, HeavyComboResetTimerHandle, HeavyComboResetTime, [this]() { CurrentHeavyAttackIndex = 0; }))
+	if (CanAttack() && EquippedWeapon && Attributes && BaseAttack(PossibleHeavyAttacks, CurrentHeavyAttackIndex,
+		HeavyComboResetTimerHandle, HeavyComboResetTime, [this]() { CurrentHeavyAttackIndex = 0; }))
 	{
 		ActionState = EActionState::EAS_Attacking;
-		EquippedWeapon->SetDamageAmount(HeavyDamage);
+		float Damage = EquippedWeapon->GetBaseDamage() * HeavyDamageMultiplier;
+		EquippedWeapon->SetDamageAmount(Damage);
 		Attributes->UseStamina(Attributes->GetHeavyAttackCost());
 	}
 }
@@ -333,7 +339,8 @@ void AKnight::HitReactEnd()
 	ActionState = EActionState::EAS_Unoccupied;
 }
 
-float AKnight::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
+float AKnight::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator,
+	AActor* DamageCauser)
 {
 	HandleDamage(DamageAmount);
 
@@ -350,9 +357,9 @@ void AKnight::SetHUDHealth()
 	}
 }
 
-void AKnight::Die()
+void AKnight::Die_Implementation()
 {
-	Super::Die();
+	Super::Die_Implementation();
 
 	ActionState = EActionState::EAS_Dead;
 }

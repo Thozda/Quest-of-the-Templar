@@ -53,8 +53,11 @@ private:
 	void DealDamage();
 	void ExecuteGetHit();
 
+	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+	float Damage;
+
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
-	float Damage = 20.f;
+	float BaseDamage = 25.f;
 
 	FHitResult BoxHit;
 
@@ -78,5 +81,6 @@ public:
 	FORCEINLINE void EmptyIgnoreActors() { IgnoreActors.Empty(); }
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE void SetCanDamage(bool state) { bCanDamage = state; }
+	FORCEINLINE float GetBaseDamage() const { return BaseDamage; }
 	FORCEINLINE void SetDamageAmount(float Amount) { Damage = Amount; }
 };
