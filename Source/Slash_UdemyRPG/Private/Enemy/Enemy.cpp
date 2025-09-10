@@ -10,6 +10,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/PawnSensingComponent.h"
 #include "Items/Weapons/Weapon.h"
+#include "Items/Soul.h"
 
 AEnemy::AEnemy()
 {
@@ -118,7 +119,7 @@ void AEnemy::CheckCombatTarget()
 
 void AEnemy::PawnSeen(APawn* SeenPawn)
 {
-	if (EnemyState == EEnemyState::EES_Patrolling && SeenPawn->ActorHasTag(FName("Knight")))
+	if (EnemyState == EEnemyState::EES_Patrolling && SeenPawn->ActorHasTag(FName("Knight")) && !SeenPawn->ActorHasTag(FName("Dead")))
 	{
 		CombatTarget = SeenPawn;
 		GetWorldTimerManager().ClearTimer(PatrolTimer);
@@ -262,28 +263,14 @@ void AEnemy::Die()
 
 	EnemyState = EEnemyState::EES_Dead;
 
-	PlayDeathMontage();
 	ClearAttackTimer();
 	SetHealthBarVisibility(false);
 	GetWorldTimerManager().ClearTimer(AttackResetTimer);
 	DisableCapsule();
-	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	SetLifeSpan(DeathLifeSpan);
 	SetWeaponCanDamage(false);
-}
-
-int32 AEnemy::PlayDeathMontage()
-{
-	const int32 Selection = Super::PlayDeathMontage();
-
-	TEnumAsByte<EDeathPose> Pose(Selection);
-	if (Pose < EDeathPose::EDP_MAX)
-	{
-		DeathPose = Pose;
-	}
-
-	return Selection;
+	SpawnSoul();
 }
 
 void AEnemy::Destroyed()
@@ -307,5 +294,19 @@ void AEnemy::SetHealthBarPercent()
 	if (Attributes && HealthBarWidget)
 	{
 		HealthBarWidget->SetHealthPercent(Attributes->GetHealthPercent());
+	}
+}
+
+void AEnemy::SpawnSoul() const
+{
+	UWorld* World = GetWorld();
+	if (World && SoulClass && Attributes)
+	{
+		ASoul* SpawnedSoul = World->SpawnActor<ASoul>(SoulClass, GetActorLocation(), GetActorRotation());
+		if (SpawnedSoul)
+		{
+			int32 Souls = FMath::RandRange(Attributes->GetMinSouls(), Attributes->GetMaxSouls());
+			SpawnedSoul->SetSouls(Souls);
+		}
 	}
 }

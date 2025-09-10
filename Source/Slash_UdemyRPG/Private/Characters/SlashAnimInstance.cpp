@@ -21,10 +21,12 @@ void USlashAnimInstance::NativeUpdateAnimation(float DeltaTime)
 {
 	Super::NativeUpdateAnimation(DeltaTime);
 
-	if (MovementComponent)
+	if (MovementComponent && Knight)
 	{
 		GroundSpeed = UKismetMathLibrary::VSizeXY(MovementComponent->Velocity);
 		IsFalling = MovementComponent->IsFalling();
 		CharacterState = Knight->GetCharacterState();
+		ActionState = Knight->GetActionState();
+		DeathPose = Knight->GetCharacterDeathPose();
 	}
 }

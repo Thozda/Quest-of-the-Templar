@@ -31,6 +31,7 @@ protected:
 	//
 	virtual bool CanAttack();
 	virtual bool BaseAttack(TArray<FName>& PossibleAttacks, int32& CurrentAttackIndex, FTimerHandle& ComboResetTimerHandle, float ComboResetTime, TFunction<void()> ResetFunc);
+	virtual void LoseInterest();
 
 	UFUNCTION(BlueprintCallable)
 	void SetWeaponCanDamage(bool state);
@@ -38,7 +39,14 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	virtual void AttackEnd();
 
-	virtual void Die();
+	UFUNCTION(BlueprintCallable)
+	virtual void DodgeEnd();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void InvulnerableStart();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void InvulnerableEnd();
 
 	UPROPERTY(BlueprintReadOnly, Category = Combat)
 	AActor* CombatTarget;
@@ -53,6 +61,10 @@ protected:
 	void DirectionalHitReact(const FVector& ImpactPoint);
 	virtual void HandleDamage(float DamageAmount);
 	void DisableCapsule();
+	virtual void Die();
+
+	UPROPERTY(BlueprintReadOnly)
+	TEnumAsByte<EDeathPose> DeathPose;
 
 	UPROPERTY(VisibleAnywhere, Category = Weapon)
 	AWeapon* EquippedWeapon;
@@ -69,8 +81,10 @@ protected:
 	//Anim Montages
 	//
 	void StopAttackMontage();
+	virtual void PlayDodgeMontage();
 	virtual void PlayHitReactMontage(const FName& SelectionName);
 	virtual int32 PlayDeathMontage();
+	int32 PlayRandomMontageSection(UAnimMontage* Montage, const TArray<FName>& SectionNames);
 
 	UFUNCTION(BlueprintCallable)
 	virtual void HitReactEnd();
@@ -80,6 +94,12 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	FVector GetRotationWarpTarget();
+
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* DeathMontage;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	TArray<FName> DeathMontageSections;
 
 	//
 	//VFX
@@ -91,23 +111,19 @@ private:
 	//Anim Montages
 	//
 	void PlayMontageSection(UAnimMontage* Montage, const FName& SectionName);
-	int32 PlayRandomMontageSection(UAnimMontage* Montage, const TArray<FName>& SectionNames);
 	virtual void PlayAttackMontage(const FName& Selection);
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* AttackMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
-	UAnimMontage* HitReactMontage;
+	UAnimMontage* DodgeMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
-	UAnimMontage* DeathMontage;
+	UAnimMontage* HitReactMontage;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TArray<FName> AttackMontageSections;
-
-	UPROPERTY(EditAnywhere, Category = Combat)
-	TArray<FName> DeathMontageSections;
 
 	//
 	//VFX
@@ -122,5 +138,8 @@ private:
 	USoundBase* HitSound;
 
 	int32 AttackIndex;
+
 	FORCEINLINE void ResetAttackIndex(int32& Index) { Index = 0; };
+	FORCEINLINE void EnableMeshCollision() { GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics); };
+	FORCEINLINE void DisableMeshCollision() { GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision); };
 };

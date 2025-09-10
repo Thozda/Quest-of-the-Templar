@@ -3,18 +3,22 @@
 
 #include "Components/AttributeComponent.h"
 
+#include "Math/UnitConversion.h"
+
 UAttributeComponent::UAttributeComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
-
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 
 void UAttributeComponent::BeginPlay()
 {
 	Super::BeginPlay();
+}
 
-	
+void UAttributeComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
 void UAttributeComponent::RevieceDamage(float Damage)
@@ -22,9 +26,12 @@ void UAttributeComponent::RevieceDamage(float Damage)
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
 }
 
-
-void UAttributeComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UAttributeComponent::UseStamina(float Quantity)
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	Stamina = FMath::Clamp(Stamina - Quantity, 0.f, MaxStamina);
+}
 
+void UAttributeComponent::RegenStamina(float DeltaTime)
+{
+	Stamina = FMath::Clamp(Stamina + StaminaRegenRate * DeltaTime, 0.f, MaxStamina);
 }

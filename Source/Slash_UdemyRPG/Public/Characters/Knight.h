@@ -5,18 +5,22 @@
 #include "CoreMinimal.h"
 #include "BaseCharacter.h"
 #include "InputActionValue.h"
+#include "Interfaces/PickupInterface.h"
 #include "Knight.generated.h"
 
 class UInputMappingContext;
 class UInputAction;
 class USpringArmComponent;
 class UCameraComponent;
+class UMainOverlay;
 class AItem;
 class UAnimMontage;
 class USoundBase;
+class ASoul;
+class ATreasure;
 
 UCLASS()
-class SLASH_UDEMYRPG_API AKnight : public ABaseCharacter
+class SLASH_UDEMYRPG_API AKnight : public ABaseCharacter, public IPickupInterface
 {
 	GENERATED_BODY()
 
@@ -24,10 +28,13 @@ public:
 	AKnight();
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
+	virtual void Tick(float DeltaTime) override; 
+	
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
-
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
+	virtual void SetOverlappingItem(AItem* Item) override;
+	virtual void AddSouls(ASoul* Soul) override;
+	virtual void AddGold(ATreasure* Treasure) override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -62,10 +69,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputAction* HeavyAttackAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
+	UInputAction* DodgeAction;
+
 	//
 	//Anim Montages
 	//
 	virtual void AttackEnd() override;
+	virtual void DodgeEnd() override;
 
 	UFUNCTION(BlueprintCallable)
 	void AttachWeaponToBack();
@@ -84,8 +95,30 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TArray<FName> PossibleHeavyAttacks;
 
+	//
+	//Attack
+	//
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float LightDamage = 20;
+	
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float HeavyDamage = 30;
+	
+	//
+	//Damage
+	//
+	 
+	virtual void Die() override;
+	virtual int32 PlayDeathMontage() override;
+
+	UPROPERTY(BlueprintReadOnly)
+	TEnumAsByte<ECharacterDeathPose> CharacterDeathPose;
+
+
 private:
 	ECharacterState CharacterState = ECharacterState::ECS_UnEquipped;
+
+	void InitialiseEnhancedInput(APlayerController* PlayerController);
 
 	bool KnightIsFalling();
 
@@ -102,6 +135,15 @@ private:
 	AItem* OverlappingItem;
 
 	//
+	//Overlay
+	//
+	void InitialiseOverlay(APlayerController* PlayerController);
+	void SetHUDHealth();
+
+	UPROPERTY()
+	UMainOverlay* Overlay;
+
+	//
 	//Callbacks For Input
 	//
 	void Move(const FInputActionValue& Value);
@@ -110,6 +152,7 @@ private:
 	void Equip(const FInputActionValue& Value);
 	void LightAttack(const FInputActionValue& Value);
 	void HeavyAttack(const FInputActionValue& Value);
+	void Dodge(const FInputActionValue& Value);
 
 	//
 	//Animation Montages
@@ -144,7 +187,8 @@ private:
 	//
 
 public:
-	FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
 	FORCEINLINE void SetActionState(EActionState state) { ActionState = state; }
+	FORCEINLINE EActionState GetActionState() const { return ActionState; }
+	FORCEINLINE TEnumAsByte<ECharacterDeathPose> GetCharacterDeathPose() const { return CharacterDeathPose; }
 };

@@ -37,6 +37,13 @@ void ABaseCharacter::Tick(float DeltaTime)
 bool ABaseCharacter::BaseAttack(TArray<FName>& PossibleAttacks, int32& CurrentAttackIndex, FTimerHandle& ComboResetTimerHandle, float ComboResetTime, TFunction<void()> ResetFunc)
 {
 	if (PossibleAttacks.Num() <= 0) return false;
+
+	if (CombatTarget && CombatTarget->ActorHasTag(FName("Dead")))
+	{
+		LoseInterest();
+		return false;
+	}
+
 	FName SelectedAttack = PossibleAttacks[CurrentAttackIndex];
 	PlayAttackMontage(SelectedAttack);
 
@@ -96,6 +103,29 @@ void ABaseCharacter::StopAttackMontage()
 	}
 }
 
+void ABaseCharacter::PlayDodgeMontage()
+{
+	if (DodgeMontage)
+	{
+		PlayMontageSection(DodgeMontage, FName("Default"));
+	}
+}
+
+void ABaseCharacter::DodgeEnd()
+{
+	
+}
+
+void ABaseCharacter::InvulnerableStart()
+{
+	DisableMeshCollision();
+}
+
+void ABaseCharacter::InvulnerableEnd()
+{
+	EnableMeshCollision();
+}
+
 FVector ABaseCharacter::GetTranslationWarpTarget()
 {
 	if (CombatTarget == nullptr) return FVector();
@@ -118,6 +148,11 @@ FVector ABaseCharacter::GetRotationWarpTarget()
 	return FVector();
 }
 
+void ABaseCharacter::LoseInterest()
+{
+
+}
+
 void ABaseCharacter::HitReactEnd()
 {
 
@@ -125,7 +160,15 @@ void ABaseCharacter::HitReactEnd()
 
 int32 ABaseCharacter::PlayDeathMontage()
 {
-	return PlayRandomMontageSection(DeathMontage, DeathMontageSections);
+	const int32 Selection = PlayRandomMontageSection(DeathMontage, DeathMontageSections);
+
+	TEnumAsByte<EDeathPose> Pose(Selection);
+	if (Pose < EDeathPose::EDP_MAX)
+	{
+		DeathPose = Pose;
+	}
+
+	return Selection;
 }
 
 void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
@@ -236,5 +279,7 @@ void ABaseCharacter::AttackEnd()
 
 void ABaseCharacter::Die()
 {
-
+	Tags.Add(FName("Dead"));
+	PlayDeathMontage();
+	DisableMeshCollision();
 }

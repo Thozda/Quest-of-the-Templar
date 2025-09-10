@@ -78,4 +78,5 @@ public:
 	FORCEINLINE void EmptyIgnoreActors() { IgnoreActors.Empty(); }
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE void SetCanDamage(bool state) { bCanDamage = state; }
+	FORCEINLINE void SetDamageAmount(float Amount) { Damage = Amount; }
 };

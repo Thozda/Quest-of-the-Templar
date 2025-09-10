@@ -11,6 +11,7 @@ class UHealthBarComponent;
 class AAIController;
 class UPawnSensingComponent;
 class AWeapon;
+class ASoul;
 
 UCLASS()
 class SLASH_UDEMYRPG_API AEnemy : public ABaseCharacter
@@ -36,6 +37,7 @@ protected:
 	//Attacks
 	//
 	virtual void AttackEnd() override;
+	virtual void LoseInterest() override;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TArray<FName> PossibleAttacks;
@@ -44,12 +46,8 @@ protected:
 	//Death
 	//
 	virtual void Die() override;
-	virtual int32 PlayDeathMontage() override;
 	virtual void HandleDamage(float DamageAmount) override;
 	virtual void HitReactEnd() override;
-
-	UPROPERTY(BlueprintReadOnly)
-	TEnumAsByte<EDeathPose> DeathPose;
 
 private:
 	void InitializeEnemy();
@@ -62,6 +60,14 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	UHealthBarComponent* HealthBarWidget;
+
+	//
+	//Souls
+	//
+	void SpawnSoul() const;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	TSubclassOf<ASoul> SoulClass;
 
 	//
 	//AI Navigation
@@ -124,7 +130,6 @@ private:
 	virtual bool CanAttack() override;
 	void Attack();
 	void StartAttackTimer();
-	void LoseInterest();
 	virtual void Destroyed() override;
 
 	UPROPERTY(EditAnywhere)

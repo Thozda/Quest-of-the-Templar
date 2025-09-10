@@ -20,15 +20,68 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	//current Health
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
 	float Health;
 
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
 	float MaxHealth;
 
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+	float Stamina;
+
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+	float MaxStamina;
+
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+	float StaminaRegenRate = 8.f;
+
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+	int32 Gold;
+
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+	int32 MinSouls;
+
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+	int32 MaxSouls;
+
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+	int32 Souls;
+
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+	int32 DodgeCost = 20.f;
+
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+	int32 LightAttackCost = 10.f;
+
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+	int32 HeavyAttackCost = 30.f;
+
 public:
+	//
+	//Health
+	//
 	void RevieceDamage(float Damage);
-	FORCEINLINE float GetHealthPercent() const { return Health / MaxHealth; }
 	bool IsAlive() const { return Health > 0.f; }
+	FORCEINLINE float GetHealthPercent() const { return Health / MaxHealth; }
+
+	//
+	//Stamina
+	//
+	void UseStamina(float Quantity);
+	FORCEINLINE int32 GetStamina() const { return Stamina; }
+	FORCEINLINE float GetStaminaPercent() const { return Stamina / MaxStamina; }
+	void RegenStamina(float DeltaTime);
+	FORCEINLINE int32 GetDodgeCost() const { return DodgeCost; }
+	FORCEINLINE int32 GetLightAttackCost() const { return LightAttackCost; }
+	FORCEINLINE int32 GetHeavyAttackCost() const { return HeavyAttackCost; }
+
+	//
+	//Currencies
+	//
+	FORCEINLINE int32 GetGold() const { return Gold; }
+	FORCEINLINE void AddGold(int32 Quantity) { Gold += Quantity; }
+	FORCEINLINE int32 GetSouls() const { return Souls; }
+	FORCEINLINE int32 GetMinSouls() const { return MinSouls; }
+	FORCEINLINE int32 GetMaxSouls() const { return MaxSouls; }
+	FORCEINLINE void AddSouls(int32 Quantity) { Souls += Quantity; }
 };

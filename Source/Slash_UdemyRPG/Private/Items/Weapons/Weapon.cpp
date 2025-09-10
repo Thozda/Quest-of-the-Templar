@@ -74,7 +74,7 @@ void AWeapon::DisableSphereCollision()
 
 void AWeapon::DeactivateLootParticles()
 {
-	if (PickupEffect) PickupEffect->Deactivate();
+	if (ItemEffect) ItemEffect->Deactivate();
 }
 
 //

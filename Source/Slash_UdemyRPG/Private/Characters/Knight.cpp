@@ -7,14 +7,19 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/AttributeComponent.h"
 #include "Items/Weapons/Weapon.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "HUD/MainHUD.h"
+#include "HUD/MainOverlay.h"
+#include "Items/Soul.h"
+#include "Items/Treasure.h"
 
 AKnight::AKnight()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
@@ -51,6 +56,7 @@ void AKnight::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &AKnight::Equip);
 		EnhancedInputComponent->BindAction(LightAttackAction, ETriggerEvent::Started, this, &AKnight::LightAttack);
 		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Started, this, &AKnight::HeavyAttack);
+		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Triggered, this, &AKnight::Dodge);
 	}
 }
 
@@ -60,13 +66,46 @@ void AKnight::BeginPlay()
 	
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(KnightMappingContext, 0);
-		}
+		InitialiseEnhancedInput(PlayerController);
+		InitialiseOverlay(PlayerController);
 	}
 
 	Tags.Add(FName("Knight"));
+}
+
+void AKnight::InitialiseEnhancedInput(APlayerController* PlayerController)
+{
+	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+	{
+		Subsystem->AddMappingContext(KnightMappingContext, 0);
+	}
+}
+
+void AKnight::InitialiseOverlay(APlayerController* PlayerController)
+{
+	AMainHUD* HUD = Cast<AMainHUD>(PlayerController->GetHUD());
+	if (HUD)
+	{
+		Overlay = HUD->GetOverlay();
+		if (Overlay && Attributes)
+		{
+			Overlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+			Overlay->SetStaminaBarPercent(1.f);
+			Overlay->SetGoldText(0);
+			Overlay->SetSoulsText(0);
+		}
+	}
+}
+
+void AKnight::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (Attributes && Overlay)
+	{
+		Attributes->RegenStamina(DeltaTime);
+		Overlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+	}
 }
 
 //
@@ -110,6 +149,50 @@ void AKnight::Jump(const FInputActionValue& Value)
 bool AKnight::KnightIsFalling()
 {
 	return GetCharacterMovement()->IsFalling();
+}
+
+void AKnight::Dodge(const FInputActionValue& Value)
+{
+	if (ActionState != EActionState::EAS_Unoccupied) return;
+	if (Attributes && Attributes->GetStamina() < Attributes->GetDodgeCost()) return;
+	PlayDodgeMontage();
+	ActionState = EActionState::EAS_Dodge;
+	if (Attributes)
+	{
+		Attributes->UseStamina(Attributes->GetDodgeCost());
+	}
+}
+
+void AKnight::DodgeEnd()
+{
+	Super::DodgeEnd();
+	ActionState = EActionState::EAS_Unoccupied;
+}
+
+//
+//Pickup
+//
+void AKnight::SetOverlappingItem(AItem* Item)
+{
+	OverlappingItem = Item;
+}
+
+void AKnight::AddSouls(ASoul* Soul)
+{
+	if (Soul && Attributes && Overlay)
+	{
+		Attributes->AddSouls(Soul->GetSouls());
+		Overlay->SetSoulsText(Attributes->GetSouls());
+	}
+}
+
+void AKnight::AddGold(ATreasure* Treasure)
+{
+	if (Treasure && Attributes && Overlay)
+	{
+		Attributes->AddGold(Treasure->GetGold());
+		Overlay->SetGoldText(Attributes->GetGold());
+	}
 }
 
 //
@@ -202,17 +285,23 @@ void AKnight::PlayArmMontage(const FName& SelectionName)
 //
 void AKnight::LightAttack(const FInputActionValue& Value)
 {
-	if (CanAttack() && BaseAttack(PossibleLightAttacks, CurrentLightAttackIndex, LightComboResetTimerHandle, LightComboResetTime, [this]() { CurrentLightAttackIndex = 0; }))
+	if (Attributes && Attributes->GetStamina() < Attributes->GetLightAttackCost()) return;
+	if (CanAttack() && EquippedWeapon && Attributes && BaseAttack(PossibleLightAttacks, CurrentLightAttackIndex, LightComboResetTimerHandle, LightComboResetTime, [this]() { CurrentLightAttackIndex = 0; }))
 	{
 		ActionState = EActionState::EAS_Attacking;
+		EquippedWeapon->SetDamageAmount(LightDamage);
+		Attributes->UseStamina(Attributes->GetLightAttackCost());
 	}
 }
 
 void AKnight::HeavyAttack(const FInputActionValue& Value)
 {
-	if (CanAttack() && BaseAttack(PossibleHeavyAttacks, CurrentHeavyAttackIndex, HeavyComboResetTimerHandle, HeavyComboResetTime, [this]() { CurrentHeavyAttackIndex = 0; }))
+	if (Attributes && Attributes->GetStamina() < Attributes->GetHeavyAttackCost()) return;
+	if (CanAttack() && EquippedWeapon && Attributes && BaseAttack(PossibleHeavyAttacks, CurrentHeavyAttackIndex, HeavyComboResetTimerHandle, HeavyComboResetTime, [this]() { CurrentHeavyAttackIndex = 0; }))
 	{
 		ActionState = EActionState::EAS_Attacking;
+		EquippedWeapon->SetDamageAmount(HeavyDamage);
+		Attributes->UseStamina(Attributes->GetHeavyAttackCost());
 	}
 }
 
@@ -235,7 +324,7 @@ void AKnight::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 {
 	Super::GetHit_Implementation(ImpactPoint, Hitter);
 
-	ActionState = EActionState::EAS_HitReaction;
+	if (IsAlive()) ActionState = EActionState::EAS_HitReaction;
 	SetWeaponCanDamage(false);
 }
 
@@ -247,5 +336,36 @@ void AKnight::HitReactEnd()
 float AKnight::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
 	HandleDamage(DamageAmount);
+
+	SetHUDHealth();
+
 	return DamageAmount;
+}
+
+void AKnight::SetHUDHealth()
+{
+	if (Attributes && Overlay)
+	{
+		Overlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+	}
+}
+
+void AKnight::Die()
+{
+	Super::Die();
+
+	ActionState = EActionState::EAS_Dead;
+}
+
+int32 AKnight::PlayDeathMontage()
+{
+	const int32 Selection = PlayRandomMontageSection(DeathMontage, DeathMontageSections);
+
+	TEnumAsByte<ECharacterDeathPose> Pose(Selection);
+	if (Pose < ECharacterDeathPose::ECD_MAX)
+	{
+		CharacterDeathPose = Pose;
+	}
+
+	return Selection;
 }
