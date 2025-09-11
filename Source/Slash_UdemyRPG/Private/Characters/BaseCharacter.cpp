@@ -8,8 +8,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Components/CapsuleComponent.h"
-#include "Components/AttributeComponent.h"
-#include "Slash_UdemyRPG/DebugMacros.h"
 #include "Kismet/KismetMathLibrary.h"
 
 ABaseCharacter::ABaseCharacter()
