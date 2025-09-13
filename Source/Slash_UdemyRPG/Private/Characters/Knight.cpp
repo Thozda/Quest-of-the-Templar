@@ -342,10 +342,13 @@ void AKnight::HitReactEnd()
 float AKnight::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator,
 	AActor* DamageCauser)
 {
+	if (Attributes && Attributes->GetHealthPercent() <= 0.f) return DamageAmount;
+	
 	HandleDamage(DamageAmount);
 
 	SetHUDHealth();
 
+	if (Attributes && Attributes->GetHealthPercent() <= 0.f && !Cast<AWeapon>(DamageCauser)) GetHit_Implementation(GetActorLocation(), DamageCauser);
 	return DamageAmount;
 }
 
