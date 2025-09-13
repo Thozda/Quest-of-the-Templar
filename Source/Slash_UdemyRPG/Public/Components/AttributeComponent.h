@@ -17,10 +17,28 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 	override;
 
+	//
+	//Upgrade
+	//
+	FString CheckUpgradeRequirements();
+	bool Upgrade();
+
 protected:
 	virtual void BeginPlay() override;
 
 private:
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+	int32 Level = 0;
+
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+	float StatMultiplyer = 1.2f;
+
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+	int32 NextUpgradeGoldCost = 50;
+
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+	int32 NextUpgradeSoulCost = 25;
+
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
 	float Health;
 
@@ -57,6 +75,12 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
 	int32 HeavyAttackCost = 30.f;
 
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+	float LightDamageMultiplier = 0.8;
+	
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+	float HeavyDamageMultiplier = 1.2f;
+	
 public:
 	//
 	//Health
@@ -65,6 +89,12 @@ public:
 	bool IsAlive() const { return Health > 0.f; }
 	FORCEINLINE float GetHealthPercent() const { return Health / MaxHealth; }
 
+	//
+	//Attack
+	//
+	FORCEINLINE float GetLightDamageMultiplier() const { return LightDamageMultiplier; }
+	FORCEINLINE float GetHeavyDamageMultiplier() const { return HeavyDamageMultiplier; }
+	
 	//
 	//Stamina
 	//

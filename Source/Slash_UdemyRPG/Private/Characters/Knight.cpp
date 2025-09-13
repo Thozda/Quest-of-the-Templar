@@ -15,6 +15,7 @@
 #include "HUD/MainOverlay.h"
 #include "Items/Soul.h"
 #include "Items/Treasure.h"
+#include "Volumes/Campfire.h"
 
 AKnight::AKnight()
 {
@@ -91,9 +92,9 @@ void AKnight::InitialiseOverlay(APlayerController* PlayerController)
 		if (Overlay && Attributes)
 		{
 			Overlay->SetHealthBarPercent(Attributes->GetHealthPercent());
-			Overlay->SetStaminaBarPercent(1.f);
-			Overlay->SetGoldText(0);
-			Overlay->SetSoulsText(0);
+			Overlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+			Overlay->SetGoldText(Attributes->GetGold());
+			Overlay->SetSoulsText(Attributes->GetSouls());
 		}
 	}
 }
@@ -107,6 +108,18 @@ void AKnight::Tick(float DeltaTime)
 		Attributes->RegenStamina(DeltaTime);
 		Overlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 	}
+}
+
+//
+//Upgrades
+//
+FString AKnight::CampfireText()
+{
+	if (Attributes)
+	{
+		return Attributes->CheckUpgradeRequirements();
+	}
+	return FString("");
 }
 
 //
@@ -202,7 +215,15 @@ void AKnight::AddGold(ATreasure* Treasure)
 void AKnight::Equip(const FInputActionValue& Value)
 {
 	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
-	if (OverlappingWeapon)
+	if (Campfire && Overlay && Attributes && Attributes->Upgrade())
+	{
+		Campfire->UpgradeComplete();
+		Overlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+		Overlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+		Overlay->SetGoldText(Attributes->GetGold());
+		Overlay->SetSoulsText(Attributes->GetSouls());
+	}
+	else if (OverlappingWeapon)
 	{
 		if (EquippedWeapon) EquippedWeapon->Destroy();
 		EquipWeapon(OverlappingWeapon);
@@ -292,7 +313,7 @@ void AKnight::LightAttack(const FInputActionValue& Value)
 		LightComboResetTimerHandle, LightComboResetTime, [this]() { CurrentLightAttackIndex = 0; }))
 	{
 		ActionState = EActionState::EAS_Attacking;
-		float Damage = EquippedWeapon->GetBaseDamage() * LightDamageMultiplier;
+		float Damage = EquippedWeapon->GetBaseDamage() * Attributes->GetLightDamageMultiplier();
 		EquippedWeapon->SetDamageAmount(Damage);
 		Attributes->UseStamina(Attributes->GetLightAttackCost());
 	}
@@ -305,7 +326,7 @@ void AKnight::HeavyAttack(const FInputActionValue& Value)
 		HeavyComboResetTimerHandle, HeavyComboResetTime, [this]() { CurrentHeavyAttackIndex = 0; }))
 	{
 		ActionState = EActionState::EAS_Attacking;
-		float Damage = EquippedWeapon->GetBaseDamage() * HeavyDamageMultiplier;
+		float Damage = EquippedWeapon->GetBaseDamage() * Attributes->GetHeavyDamageMultiplier();
 		EquippedWeapon->SetDamageAmount(Damage);
 		Attributes->UseStamina(Attributes->GetHeavyAttackCost());
 	}

@@ -22,6 +22,42 @@ void UAttributeComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
+FString UAttributeComponent::CheckUpgradeRequirements()
+{
+	if (Souls < NextUpgradeSoulCost)
+	{
+		return FString::Printf(TEXT("Next Upgrade Available At %d Souls"), NextUpgradeSoulCost);
+	}
+	else if (Gold < NextUpgradeGoldCost)
+	{
+		return FString::Printf(TEXT("Next Upgrade Costs %d Gold"), NextUpgradeGoldCost);
+	}
+	else
+	{
+		return FString::Printf(TEXT("Interact To Buy Upgrade For %d Gold"), NextUpgradeGoldCost);
+	}
+}
+
+bool UAttributeComponent::Upgrade()
+{
+	if (Souls >= NextUpgradeSoulCost && Gold >= NextUpgradeGoldCost)
+	{
+		Level++;
+		Gold -= NextUpgradeGoldCost;
+		NextUpgradeGoldCost += 50;
+		NextUpgradeSoulCost += 25;
+		MaxHealth *= StatMultiplyer;
+		Health = MaxHealth;
+		MaxStamina *= StatMultiplyer;
+		Stamina = MaxStamina;
+		StaminaRegenRate *= StatMultiplyer;
+		LightDamageMultiplier *= StatMultiplyer;
+		HeavyDamageMultiplier *= StatMultiplyer;
+		return true;
+	}
+	return false;
+}
+
 void UAttributeComponent::RevieceDamage(float Damage)
 {
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);

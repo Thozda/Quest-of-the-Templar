@@ -8,6 +8,7 @@
 #include "Interfaces/PickupInterface.h"
 #include "Knight.generated.h"
 
+class ACampfire;
 class UInputMappingContext;
 class UInputAction;
 class USpringArmComponent;
@@ -36,6 +37,12 @@ public:
 	virtual void SetOverlappingItem(AItem* Item) override;
 	virtual void AddSouls(ASoul* Soul) override;
 	virtual void AddGold(ATreasure* Treasure) override;
+
+	//
+	//Upgrade
+	//
+	ACampfire* Campfire;
+	FString CampfireText();
 
 protected:
 	virtual void BeginPlay() override;
@@ -96,15 +103,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TArray<FName> PossibleHeavyAttacks;
 
-	//
-	//Attack
-	//
-	UPROPERTY(EditAnywhere, Category = Combat)
-	float LightDamageMultiplier = 0.8;
-	
-	UPROPERTY(EditAnywhere, Category = Combat)
-	float HeavyDamageMultiplier = 1.2f;
-	
 	//
 	//Damage
 	//
@@ -183,13 +181,10 @@ private:
 	FTimerHandle LightComboResetTimerHandle;
 	FTimerHandle HeavyComboResetTimerHandle;
 
-	//
-	//Damage
-	//
-
 public:
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
 	FORCEINLINE void SetActionState(EActionState state) { ActionState = state; }
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }
 	FORCEINLINE TEnumAsByte<ECharacterDeathPose> GetCharacterDeathPose() const { return CharacterDeathPose; }
+	FORCEINLINE UCameraComponent* GetCamera() const { return ViewCamera; }
 };
