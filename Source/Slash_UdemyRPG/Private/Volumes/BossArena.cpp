@@ -14,25 +14,25 @@ ABossArena::ABossArena()
 	TriggerBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	
 	Wall1 = CreateDefaultSubobject<UBoxComponent>(TEXT("Wall 1"));
-	Wall1->SetupAttachment(GetRootComponent());
-	Wall1->SetCollisionResponseToAllChannels(ECR_Ignore);
 	Walls.Add(Wall1);
 	
 	Wall2 = CreateDefaultSubobject<UBoxComponent>(TEXT("Wall 2"));
-	Wall2->SetupAttachment(GetRootComponent());
-	Wall2->SetCollisionResponseToAllChannels(ECR_Ignore);
 	Walls.Add(Wall2);
 	
 	Wall3 = CreateDefaultSubobject<UBoxComponent>(TEXT("Wall 3"));
-	
-	Wall3->SetupAttachment(GetRootComponent());
-	Wall3->SetCollisionResponseToAllChannels(ECR_Ignore);
 	Walls.Add(Wall3);
 	
 	Wall4 = CreateDefaultSubobject<UBoxComponent>(TEXT("Wall 4"));
-	Wall4->SetupAttachment(GetRootComponent());
-	Wall4->SetCollisionResponseToAllChannels(ECR_Ignore);
 	Walls.Add(Wall4);
+
+	for (UBoxComponent* Wall : Walls)
+	{
+		Wall->SetupAttachment(GetRootComponent());
+		Wall->SetCollisionObjectType(ECC_WorldStatic);
+		Wall->SetCollisionResponseToAllChannels(ECR_Block);
+		Wall->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+		Wall->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 }
 
 void ABossArena::BeginPlay()
@@ -58,8 +58,7 @@ void ABossArena::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 		{
 			if (Wall)
 			{
-				Wall->SetCollisionResponseToAllChannels(ECR_Block);
-				Wall->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+				Wall->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 			}
 		}
 	}
@@ -71,7 +70,7 @@ void ABossArena::BossDead()
 	{
 		if (Wall)
 		{
-			Wall->SetCollisionResponseToAllChannels(ECR_Ignore);
+			Wall->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 	}
 }
