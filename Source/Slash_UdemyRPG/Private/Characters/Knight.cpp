@@ -16,6 +16,7 @@
 #include "Items/Soul.h"
 #include "Items/Treasure.h"
 #include "Volumes/Campfire.h"
+#include "Volumes/MountainDoor.h"
 
 AKnight::AKnight()
 {
@@ -54,7 +55,8 @@ void AKnight::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AKnight::Move);
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AKnight::Look);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AKnight::Jump);
-		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &AKnight::Equip);
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &AKnight::Interact);
+		EnhancedInputComponent->BindAction(DisarmAction, ETriggerEvent::Started, this, &AKnight::Disarm);
 		EnhancedInputComponent->BindAction(LightAttackAction, ETriggerEvent::Started, this, &AKnight::LightAttack);
 		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Started, this, &AKnight::HeavyAttack);
 		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Triggered, this, &AKnight::Dodge);
@@ -72,6 +74,8 @@ void AKnight::BeginPlay()
 	}
 
 	Tags.Add(FName("Knight"));
+
+	InitialiseTeleportTarget();
 }
 
 void AKnight::InitialiseEnhancedInput(APlayerController* PlayerController)
@@ -99,6 +103,17 @@ void AKnight::InitialiseOverlay(APlayerController* PlayerController)
 	}
 }
 
+void AKnight::InitialiseTeleportTarget()
+{
+	TArray<AActor*> OutActors;
+	UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("TeleportTarget"), OutActors);
+
+	if (OutActors.Num() > 0)
+	{
+		TeleportTarget = OutActors[0];
+	}
+}
+
 void AKnight::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -108,18 +123,6 @@ void AKnight::Tick(float DeltaTime)
 		Attributes->RegenStamina(DeltaTime);
 		Overlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 	}
-}
-
-//
-//Upgrades
-//
-FString AKnight::CampfireText()
-{
-	if (Attributes)
-	{
-		return Attributes->CheckUpgradeRequirements();
-	}
-	return FString("");
 }
 
 //
@@ -182,13 +185,87 @@ void AKnight::DodgeEnd()
 	Super::DodgeEnd();
 	ActionState = EActionState::EAS_Unoccupied;
 }
+//
+//Interact
+//
+void AKnight::Interact(const FInputActionValue& Value)
+{
+	if (Cast<ACampfire>(OverlappingActor) && Overlay && Attributes && Attributes->Upgrade())
+	{
+		Campfire = Cast<ACampfire>(OverlappingActor);
+		Campfire->UpgradeComplete();
+		Overlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+		Overlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+		Overlay->SetGoldText(Attributes->GetGold());
+		Overlay->SetSoulsText(Attributes->GetSouls());
+	}
+	else if (Cast<AWeapon>(OverlappingActor))
+	{
+		AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingActor);
+		if (EquippedWeapon) EquippedWeapon->Destroy();
+		EquipWeapon(OverlappingWeapon);
+	}
+	else if (Cast<AMountainDoor>(OverlappingActor) && KeysHeld >= KeysRequired && TeleportTarget && GetController())
+	{
+		SetActorLocationAndRotation(TeleportTarget->GetActorLocation(), TeleportTarget->GetActorRotation());
+		GetController()->SetControlRotation(GetActorRotation());
+		OverlappingActor = nullptr;
+	}
+}
+
+void AKnight::SetOverlappingActor(AActor* Actor)
+{
+	OverlappingActor = Actor;
+}
+
+UCameraComponent* AKnight::GetDoorTextTarget()
+{
+	return ViewCamera;
+}
+
+FString AKnight::DoorText()
+{
+	if (KeysHeld < KeysRequired)
+	{
+		return FString::Printf(TEXT("Collect Keys To Unlock"));
+	}
+	return FString::Printf(TEXT("Interact To Enter Endgame"));
+}
+
+//
+//Upgrades
+//
+void AKnight::SetOverlappingCampfire(AActor* OverlappingCampfire)
+{
+	OverlappingActor = OverlappingCampfire;
+}
+
+UCameraComponent* AKnight::GetPlayerCamera()
+{
+	return ViewCamera;
+}
+
+void AKnight::SetCampfireNull()
+{
+	Campfire = nullptr;
+	if (Cast<ACampfire>(OverlappingActor)) OverlappingActor = nullptr;
+}
+
+FString AKnight::CampfireText()
+{
+	if (Attributes)
+	{
+		return Attributes->CheckUpgradeRequirements();
+	}
+	return FString("");
+}
 
 //
 //Pickup
 //
-void AKnight::SetOverlappingItem(AItem* Item)
+void AKnight::SetOverlappingItem(AActor* Item)
 {
-	OverlappingItem = Item;
+	OverlappingActor = Item;
 }
 
 void AKnight::AddSouls(ASoul* Soul)
@@ -212,33 +289,10 @@ void AKnight::AddGold(ATreasure* Treasure)
 //
 //Equip
 //
-void AKnight::Equip(const FInputActionValue& Value)
-{
-	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
-	if (Campfire && Overlay && Attributes && Attributes->Upgrade())
-	{
-		Campfire->UpgradeComplete();
-		Overlay->SetHealthBarPercent(Attributes->GetHealthPercent());
-		Overlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
-		Overlay->SetGoldText(Attributes->GetGold());
-		Overlay->SetSoulsText(Attributes->GetSouls());
-	}
-	else if (OverlappingWeapon)
-	{
-		if (EquippedWeapon) EquippedWeapon->Destroy();
-		EquipWeapon(OverlappingWeapon);
-	}
-	else
-	{
-		if (CanDisarm()) Disarm();
-		else if (CanArm()) Arm();
-	}
-}
-
 void AKnight::EquipWeapon(AWeapon* Weapon)
 {
 	Weapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
-	OverlappingItem = nullptr;
+	OverlappingActor = nullptr;
 	CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
 	EquippedWeapon = Weapon;
 }
@@ -260,9 +314,16 @@ bool AKnight::CanArm()
 
 void AKnight::Disarm()
 {
-	PlayArmMontage(FName("Unequip"));
-	CharacterState = ECharacterState::ECS_UnEquipped;
-	ActionState = EActionState::EAS_EquippingWeapon;
+	if (CanDisarm())
+	{
+		PlayArmMontage(FName("Unequip"));
+		CharacterState = ECharacterState::ECS_UnEquipped;
+		ActionState = EActionState::EAS_EquippingWeapon;
+	}
+	else if (CanArm())
+	{
+		Arm();
+	}
 }
 
 void AKnight::Arm()

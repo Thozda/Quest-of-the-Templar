@@ -5,9 +5,8 @@
 
 // Add default functionality here for any IPickupInterface functions that are not pure virtual.
 
-void IPickupInterface::SetOverlappingItem(AItem* Item)
+void IPickupInterface::SetOverlappingItem(AActor* Item)
 {
-
 }
 
 void IPickupInterface::AddSouls(ASoul* Soul)

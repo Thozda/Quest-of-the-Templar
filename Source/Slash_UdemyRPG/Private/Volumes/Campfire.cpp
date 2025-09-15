@@ -4,10 +4,10 @@
 #include "Volumes/Campfire.h"
 
 #include "NiagaraFunctionLibrary.h"
-#include "Characters/Knight.h"
 #include "Components/SphereComponent.h"
 #include "HUD/CampfireWidgetComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Interfaces/UpgradeInterface.h"
 
 ACampfire::ACampfire()
 {
@@ -31,42 +31,43 @@ void ACampfire::BeginPlay()
 {
 	Super::BeginPlay();
 
-	Sphere->OnComponentBeginOverlap.AddDynamic(this, &ACampfire::OnSphereOverlap);
-	Sphere->OnComponentEndOverlap.AddDynamic(this, &ACampfire::OnSphereEndOverlap);
+	if (Sphere)
+	{
+		Sphere->OnComponentBeginOverlap.AddDynamic(this, &ACampfire::OnSphereOverlap);
+		Sphere->OnComponentEndOverlap.AddDynamic(this, &ACampfire::OnSphereEndOverlap);
+	}
 }
 
 void ACampfire::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (Knight && WidgetComponent)
+	if (UpgradeInterface && WidgetComponent)
 	{
-		WidgetComponent->FacePlayerCamera(Knight);
+		WidgetComponent->FacePlayerCamera(UpgradeInterface->GetPlayerCamera());
 	}
 }
 
 void ACampfire::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (WidgetComponent && OtherActor && OtherActor->ActorHasTag("Knight"))
+	UpgradeInterface = Cast<IUpgradeInterface>(OtherActor);
+	if (UpgradeInterface && WidgetComponent)
 	{
-		if (Cast<AKnight>(OtherActor))
-		{
-			Knight = Cast<AKnight>(OtherActor);
-			WidgetComponent->SetCampfireText(Knight->CampfireText());
-			Knight->Campfire = this;
-		}
+		WidgetComponent->SetCampfireText(UpgradeInterface->CampfireText());
+		UpgradeInterface->SetOverlappingCampfire(this);
 	}
 }
 
 void ACampfire::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (WidgetComponent && OtherActor && OtherActor->ActorHasTag("Knight"))
+	UpgradeInterface = Cast<IUpgradeInterface>(OtherActor);
+	if (UpgradeInterface && WidgetComponent)
 	{
 		WidgetComponent->SetCampfireText(FString());
-		Knight->Campfire = nullptr;
-		Knight = nullptr;
+		UpgradeInterface->SetCampfireNull();
+		UpgradeInterface = nullptr;
 	}
 }
 

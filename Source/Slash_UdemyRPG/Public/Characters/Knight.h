@@ -6,6 +6,8 @@
 #include "BaseCharacter.h"
 #include "InputActionValue.h"
 #include "Interfaces/PickupInterface.h"
+#include "Interfaces/InteractInterface.h"
+#include "Interfaces/UpgradeInterface.h"
 #include "Knight.generated.h"
 
 class ACampfire;
@@ -21,7 +23,7 @@ class ASoul;
 class ATreasure;
 
 UCLASS()
-class SLASH_UDEMYRPG_API AKnight : public ABaseCharacter, public IPickupInterface
+class SLASH_UDEMYRPG_API AKnight : public ABaseCharacter, public IPickupInterface, public IInteractInterface, public IUpgradeInterface
 {
 	GENERATED_BODY()
 
@@ -30,19 +32,23 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void Tick(float DeltaTime) override; 
-	
+	//Damage
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
 		class AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
-	virtual void SetOverlappingItem(AItem* Item) override;
+	//Interact
+	virtual void SetOverlappingActor(AActor* Actor) override;
+	virtual UCameraComponent* GetDoorTextTarget() override;
+	virtual FString DoorText() override;
+	//Upgrades
+	virtual void SetOverlappingCampfire(AActor* OverlappingCampfire) override;
+	virtual UCameraComponent* GetPlayerCamera() override;
+	virtual void SetCampfireNull() override;
+	virtual FString CampfireText() override;
+	//Pickups
+	virtual void SetOverlappingItem(AActor* Item) override;
 	virtual void AddSouls(ASoul* Soul) override;
 	virtual void AddGold(ATreasure* Treasure) override;
-
-	//
-	//Upgrade
-	//
-	ACampfire* Campfire;
-	FString CampfireText();
 
 protected:
 	virtual void BeginPlay() override;
@@ -69,7 +75,10 @@ protected:
 	UInputAction* JumpAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
-	UInputAction* EquipAction;
+	UInputAction* InteractAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
+	UInputAction* DisarmAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputAction* LightAttackAction;
@@ -122,6 +131,20 @@ private:
 	bool KnightIsFalling();
 
 	//
+	//Endgame
+	//
+	void InitialiseTeleportTarget();
+	
+	UPROPERTY(VisibleAnywhere, Category = "Endgame")
+	int32 KeysHeld;
+
+	UPROPERTY(EditAnywhere, Category = "Endgame")
+	int32 KeysRequired = 2;
+
+	UPROPERTY(VisibleAnywhere, Category = "Endgame")
+	AActor* TeleportTarget;
+
+	//
 	//Components
 	//
 	UPROPERTY(VisibleAnywhere)
@@ -131,8 +154,14 @@ private:
 	UCameraComponent* ViewCamera;
 
 	UPROPERTY(VisibleInstanceOnly)
-	AItem* OverlappingItem;
+	AActor* OverlappingActor;
 
+	//
+	//Upgrades
+	//
+	UPROPERTY()
+	ACampfire* Campfire;
+	
 	//
 	//Overlay
 	//
@@ -148,7 +177,7 @@ private:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void Jump(const FInputActionValue& Value);
-	void Equip(const FInputActionValue& Value);
+	void Interact(const FInputActionValue& Value);
 	void LightAttack(const FInputActionValue& Value);
 	void HeavyAttack(const FInputActionValue& Value);
 	void Dodge(const FInputActionValue& Value);
@@ -186,5 +215,4 @@ public:
 	FORCEINLINE void SetActionState(EActionState state) { ActionState = state; }
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }
 	FORCEINLINE TEnumAsByte<ECharacterDeathPose> GetCharacterDeathPose() const { return CharacterDeathPose; }
-	FORCEINLINE UCameraComponent* GetCamera() const { return ViewCamera; }
 };

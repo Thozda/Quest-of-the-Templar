@@ -6,7 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Campfire.generated.h"
 
-class AKnight;
+class IUpgradeInterface;
 class UCampfireWidgetComponent;
 class USphereComponent;
 class UNiagaraSystem;
@@ -48,6 +48,6 @@ private:
 	UFUNCTION()
 	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
-	AKnight* Knight;
+	
+	IUpgradeInterface* UpgradeInterface;
 };

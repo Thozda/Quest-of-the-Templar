@@ -20,11 +20,11 @@ void UCampfireWidgetComponent::SetCampfireText(FString String)
 	}
 }
 
-void UCampfireWidgetComponent::FacePlayerCamera(AKnight* Knight)
+void UCampfireWidgetComponent::FacePlayerCamera(UCameraComponent* Camera)
 {
-	if (Knight && Knight->GetCamera())
+	if (Camera)
 	{
-		FVector FaceTarget = Knight->GetCamera()->GetComponentLocation();
+		FVector FaceTarget = Camera->GetComponentLocation();
 		FVector VectorToTarget = FaceTarget - GetComponentLocation();
 		FRotator LookAtRotation = VectorToTarget.Rotation();
 		SetWorldRotation(LookAtRotation);

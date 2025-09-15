@@ -85,8 +85,8 @@ public:
 	//
 	//Health
 	//
-	void RevieceDamage(float Damage);
-	bool IsAlive() const { return Health > 0.f; }
+	FORCEINLINE void RevieceDamage(float Damage);
+	FORCEINLINE bool IsAlive() const { return Health > 0.f; }
 	FORCEINLINE float GetHealthPercent() const { return Health / MaxHealth; }
 
 	//
@@ -98,10 +98,10 @@ public:
 	//
 	//Stamina
 	//
-	void UseStamina(float Quantity);
+	FORCEINLINE void UseStamina(float Quantity);
 	FORCEINLINE int32 GetStamina() const { return Stamina; }
 	FORCEINLINE float GetStaminaPercent() const { return Stamina / MaxStamina; }
-	void RegenStamina(float DeltaTime);
+	FORCEINLINE void RegenStamina(float DeltaTime);
 	FORCEINLINE int32 GetDodgeCost() const { return DodgeCost; }
 	FORCEINLINE int32 GetLightAttackCost() const { return LightAttackCost; }
 	FORCEINLINE int32 GetHeavyAttackCost() const { return HeavyAttackCost; }

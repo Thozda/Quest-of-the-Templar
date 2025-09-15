@@ -6,6 +6,7 @@
 #include "Components/WidgetComponent.h"
 #include "CampfireWidgetComponent.generated.h"
 
+class UCameraComponent;
 class AKnight;
 class UCampfireWidget;
 /**
@@ -18,7 +19,7 @@ class SLASH_UDEMYRPG_API UCampfireWidgetComponent : public UWidgetComponent
 
 public:
 	void SetCampfireText(FString String);
-	void FacePlayerCamera(AKnight* OtherActor);
+	void FacePlayerCamera(UCameraComponent* Camera);
 	
 private:
 	UPROPERTY()

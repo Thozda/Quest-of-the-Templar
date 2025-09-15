@@ -4,11 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "PickupInterface.generated.h"
+#include "UpgradeInterface.generated.h"
 
+class UCameraComponent;
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
-class UPickupInterface : public UInterface
+class UUpgradeInterface : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -16,13 +17,14 @@ class UPickupInterface : public UInterface
 /**
  * 
  */
-class SLASH_UDEMYRPG_API IPickupInterface
+class SLASH_UDEMYRPG_API IUpgradeInterface
 {
 	GENERATED_BODY()
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-	virtual void SetOverlappingItem(AActor* Item);
-	virtual void AddSouls(class ASoul* Soul);
-	virtual void AddGold(class ATreasure* Treasure);
+	virtual void SetOverlappingCampfire(AActor* OverlappingCampfire);
+	virtual UCameraComponent* GetPlayerCamera();
+	virtual void SetCampfireNull();
+	virtual FString CampfireText();
 };
