@@ -8,6 +8,7 @@
 #include "BreakableActor.generated.h"
 
 class UGeometryCollectionComponent;
+class UBoxComponent;
 class USoundBase;
 
 UCLASS()
@@ -28,14 +29,13 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Breakable", meta=(AllowPrivateAccess="true"))
 	UGeometryCollectionComponent* GeometryCollection;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	class UCapsuleComponent* Capsule;
-
-private:	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Breakable", meta=(AllowPrivateAccess="true"))
+	UBoxComponent* BoxCollider;
 	
+private:	
 	UPROPERTY(EditAnywhere, Category = "Breakable Properties")
 	TArray<TSubclassOf<class ATreasure>> TreasureClasses;
 
