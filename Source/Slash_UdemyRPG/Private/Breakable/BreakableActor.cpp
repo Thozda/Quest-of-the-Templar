@@ -1,7 +1,9 @@
-#include "Breakable/BreakableActor.h"
+// Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Components/BoxComponent.h"
+
+#include "Breakable/BreakableActor.h"
 #include "GeometryCollection/GeometryCollectionComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Items/Treasure.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -18,10 +20,10 @@ ABreakableActor::ABreakableActor()
 	GeometryCollection->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GeometryCollection->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 
-	BoxCollider = CreateDefaultSubobject<UBoxComponent>(TEXT("Box"));
-	BoxCollider->SetupAttachment(GetRootComponent());
-	BoxCollider->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	BoxCollider->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Block);
+	Capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule"));
+	Capsule->SetupAttachment(GetRootComponent());
+	Capsule->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	Capsule->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Block);
 }
 
 // Called when the game starts or when spawned
@@ -48,7 +50,7 @@ void ABreakableActor::OnBreak(const FChaosBreakEvent& BreakEvent)
 	//Breakable Fracture Event
 	SetLifeSpan(2.f);
 
-	BoxCollider->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+	Capsule->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 
 	if (BreakSound)
 	{
