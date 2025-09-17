@@ -8,6 +8,7 @@
 #include "BreakableActor.generated.h"
 
 class UGeometryCollectionComponent;
+class UPhysicsConstraintComponent;
 class USoundBase;
 
 UCLASS()
@@ -32,16 +33,28 @@ protected:
 	UGeometryCollectionComponent* GeometryCollection;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPhysicsConstraintComponent* PhysicsConstraint;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	class UCapsuleComponent* Capsule;
 
-private:	
-	
+private:
 	UPROPERTY(EditAnywhere, Category = "Breakable Properties")
 	TArray<TSubclassOf<class ATreasure>> TreasureClasses;
 
 	UPROPERTY(EditAnywhere, Category = "Breakable Properties")
 	USoundBase* BreakSound;
 
+	UPROPERTY()
+	UMaterialInstanceDynamic* Material1;
+	UMaterialInstanceDynamic* Material2;
+
+	UPROPERTY(VisibleAnywhere)
+	float DissolveAmount = -1.f;
+	
+	UPROPERTY(VisibleAnywhere)
+	float DissolveSpeed = 0.2f;
+	
 	UFUNCTION()
 	void OnBreak(const FChaosBreakEvent& BreakEvent);
 
