@@ -37,7 +37,7 @@ private:
 	int32 NextUpgradeGoldCost = 50;
 
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
-	int32 NextUpgradeSoulCost = 25;
+	int32 NextUpgradeSoulCost = 20;
 
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
 	float Health;

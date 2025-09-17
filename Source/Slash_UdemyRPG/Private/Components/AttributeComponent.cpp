@@ -45,7 +45,7 @@ bool UAttributeComponent::Upgrade()
 		Level++;
 		Gold -= NextUpgradeGoldCost;
 		NextUpgradeGoldCost += 50;
-		NextUpgradeSoulCost += 25;
+		NextUpgradeSoulCost += 20;
 		MaxHealth *= StatMultiplyer;
 		Health = MaxHealth;
 		MaxStamina *= StatMultiplyer;
