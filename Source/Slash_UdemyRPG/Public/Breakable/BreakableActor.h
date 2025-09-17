@@ -53,7 +53,7 @@ private:
 	float DissolveAmount = -1.f;
 	
 	UPROPERTY(VisibleAnywhere)
-	float DissolveSpeed = 0.2f;
+	float DissolveSpeed = 0.3f;
 	
 	UFUNCTION()
 	void OnBreak(const FChaosBreakEvent& BreakEvent);
