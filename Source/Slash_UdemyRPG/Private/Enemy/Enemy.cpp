@@ -12,6 +12,7 @@
 #include "Perception/PawnSensingComponent.h"
 #include "Items/Weapons/Weapon.h"
 #include "Items/Soul.h"
+#include "Kismet/GameplayStatics.h"
 
 AEnemy::AEnemy()
 {
@@ -53,10 +54,10 @@ void AEnemy::InitializeEnemy()
 	MoveToTarget(PatrolTarget);
 	SetHealthBarVisibility(false);
 	SetHealthBarPercent();
-	SpawnDefaultWeapon();
+	InitializeWeapon();
 }
 
-void AEnemy::SpawnDefaultWeapon()
+void AEnemy::InitializeWeapon()
 {
 	UWorld* World = GetWorld();
 	if (World && WeaponClasses.Num() > 0)
@@ -64,7 +65,7 @@ void AEnemy::SpawnDefaultWeapon()
 		TSubclassOf<AWeapon> RandomWeapon = WeaponClasses[FMath::RandRange(0, WeaponClasses.Num() - 1)];
 		if (!RandomWeapon)
 		{
-			SpawnDefaultWeapon();
+			InitializeWeapon();
 			return;
 		}
 
@@ -72,6 +73,14 @@ void AEnemy::SpawnDefaultWeapon()
 
 		DefaultWeapon->Equip(GetMesh(), WeaponSocket, this, this);
 		EquippedWeapon = DefaultWeapon;
+
+		if (SecondaryWeaponSocket != FName("Null"))
+		{
+			DefaultWeapon = World->SpawnActor<AWeapon>(RandomWeapon);
+			DefaultWeapon->Equip(GetMesh(), SecondaryWeaponSocket, this, this);
+			SecondaryEquippedWeapon = DefaultWeapon;
+
+		}
 	}
 }
 
@@ -127,6 +136,18 @@ void AEnemy::PawnSeen(APawn* SeenPawn)
 		CombatTarget = SeenPawn;
 		GetWorldTimerManager().ClearTimer(PatrolTimer);
 		ChaseTarget();
+	}
+}
+
+void AEnemy::LookAtPlayer(const AActor* Player)
+{
+	if (Player)
+	{
+		FVector Direction = Player->GetActorLocation() - GetActorLocation();
+		FRotator NewRotation = Direction.Rotation();
+		NewRotation.Pitch = 0.f;
+		NewRotation.Roll = 0.f;
+		SetActorRotation(NewRotation);
 	}
 }
 
@@ -196,6 +217,15 @@ void AEnemy::LoseInterest()
 	SetHealthBarVisibility(false);
 }
 
+void AEnemy::SetSecondaryWeaponCanDamage(bool state)
+{
+	if (SecondaryEquippedWeapon)
+	{
+		SecondaryEquippedWeapon->EmptyIgnoreActors();
+		SecondaryEquippedWeapon->SetCanDamage(state);
+	}
+}
+
 bool AEnemy::CanAttack()
 {
 	return IsInsideAttackRadius() && !IsAttacking() && !IsEngaged() && !IsDead();
@@ -208,6 +238,7 @@ void AEnemy::Attack()
 	{
 		EnemyState = EEnemyState::EES_Engaged;
 
+		AttackResetTime = FMath::RandRange(AttackResetTimeMin, AttackResetTimeMax);
 		GetWorldTimerManager().SetTimer(AttackResetTimer, this, &AEnemy::AttackEnd, AttackResetTime);
 	}
 }
@@ -277,6 +308,7 @@ void AEnemy::Die_Implementation()
 	SetLifeSpan(DeathLifeSpan);
 	SetWeaponCanDamage(false);
 	SpawnSoul();
+	if (BossArena) BossArena->Destroy();
 }
 
 void AEnemy::Destroyed()

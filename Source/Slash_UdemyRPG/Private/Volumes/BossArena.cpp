@@ -3,6 +3,7 @@
 
 #include "Volumes/BossArena.h"
 #include "Components/BoxComponent.h"
+#include "Enemy/Enemy.h"
 
 ABossArena::ABossArena()
 {
@@ -54,6 +55,8 @@ void ABossArena::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 {
 	if (OtherActor && OtherActor->ActorHasTag(FName("Knight")))
 	{
+		if (Boss) Boss->LookAtPlayer(OtherActor);
+		
 		for (UBoxComponent* Wall : Walls)
 		{
 			if (Wall)
@@ -63,15 +66,3 @@ void ABossArena::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 		}
 	}
 }
-
-void ABossArena::BossDead()
-{
-	for (UBoxComponent* Wall : Walls)
-	{
-		if (Wall)
-		{
-			Wall->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		}
-	}
-}
-

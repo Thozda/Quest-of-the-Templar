@@ -28,6 +28,9 @@ public:
 	
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 
+	//Called by Arena when player enters -> Bosses only
+	void LookAtPlayer(const AActor* Player);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -39,6 +42,9 @@ protected:
 	//
 	virtual void AttackEnd() override;
 	virtual void LoseInterest() override;
+
+	UFUNCTION(BlueprintCallable)
+	void SetSecondaryWeaponCanDamage(bool state);
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TArray<FName> PossibleAttacks;
@@ -125,7 +131,7 @@ private:
 	//
 	//AI Combat
 	//
-	void SpawnDefaultWeapon();
+	void InitializeWeapon();
 	void CheckCombatTarget();
 	bool InTargetRange(AActor* Target, double Radius);
 	virtual bool CanAttack() override;
@@ -146,12 +152,18 @@ private:
 	TArray<TSubclassOf<AWeapon>> WeaponClasses;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
+	AWeapon* SecondaryEquippedWeapon;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
 	FName WeaponSocket;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
+	FName SecondaryWeaponSocket = FName("Null");
+
+	UPROPERTY()
 	FTimerHandle AttackTimer;
 
-	UPROPERTY(EditAnywhere, Category = Combat)
+	UPROPERTY()
 	FTimerHandle AttackResetTimer;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
@@ -164,18 +176,32 @@ private:
 	float AttackResetTime = 2.f;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
+	float AttackResetTimeMin = 2.f;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float AttackResetTimeMax = 3.f;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
 	float DeathLifeSpan = 60.f;
 
+	UPROPERTY(EditAnywhere, Category = Combat)
+	bool bIsBoss;
+	
+	UPROPERTY(EditAnywhere, Category = Combat)
+	AActor* BossArena;
+
+	UPROPERTY(VisibleAnywhere, Category = Combat)
 	int32 CurrentAttackIndex = 0;
 
-	float ComboResetTime = 5.f;
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float ComboResetTime = 15.f;
 
 	FTimerHandle ComboResetTimerHandle;
 
 	FORCEINLINE void ClearAttackTimer() { GetWorldTimerManager().ClearTimer(AttackTimer); }
-	FORCEINLINE bool IsDead() { return EnemyState == EEnemyState::EES_Dead; }
-	FORCEINLINE bool IsEngaged() { return EnemyState == EEnemyState::EES_Engaged; }
+	FORCEINLINE bool IsDead() const { return EnemyState == EEnemyState::EES_Dead; }
+	FORCEINLINE bool IsEngaged() const { return EnemyState == EEnemyState::EES_Engaged; }
 
 public:	
-
+	FORCEINLINE bool IsBoss() const { return bIsBoss; }
 };

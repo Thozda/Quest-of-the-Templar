@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "BossArena.generated.h"
 
+class AEnemy;
 class UBoxComponent;
 
 UCLASS()
@@ -16,8 +17,6 @@ class SLASH_UDEMYRPG_API ABossArena : public AActor
 public:	
 	ABossArena();
 	virtual void Tick(float DeltaTime) override;
-
-	void BossDead();
 
 protected:
 	virtual void BeginPlay() override;
@@ -41,5 +40,8 @@ private:
 	UFUNCTION()
 	void OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
 
+	UPROPERTY(EditAnywhere)
+	AEnemy* Boss;
+	
 	TArray<UBoxComponent*> Walls;
 };
