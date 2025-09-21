@@ -34,6 +34,9 @@ private:
 	float StatMultiplyer = 1.2f;
 
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+	float HealthStatMultiplyerAddition = 0.15f;
+
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
 	int32 NextUpgradeGoldCost = 50;
 
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")

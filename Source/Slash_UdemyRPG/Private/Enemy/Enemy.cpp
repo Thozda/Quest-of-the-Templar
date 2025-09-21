@@ -258,6 +258,12 @@ void AEnemy::AttackEnd()
 	GetWorldTimerManager().ClearTimer(AttackResetTimer);
 }
 
+void AEnemy::AttackResetComboExtention()
+{
+	GetWorldTimerManager().ClearTimer(AttackResetTimer);
+	AttackResetTime = FMath::RandRange(AttackResetTimeMin, AttackResetTimeMax);
+	GetWorldTimerManager().SetTimer(AttackResetTimer, this, &AEnemy::AttackEnd, AttackResetTime);}
+
 float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator,
 	AActor* DamageCauser)
 {

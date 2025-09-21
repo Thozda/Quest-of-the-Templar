@@ -176,7 +176,7 @@ void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* H
 	{
 		DirectionalHitReact(Hitter->GetActorLocation());
 	}
-	else Die_Implementation();
+	else Die();
 
 	HitFX(ImpactPoint);
 }

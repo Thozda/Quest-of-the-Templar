@@ -46,6 +46,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void SetSecondaryWeaponCanDamage(bool state);
 
+	UFUNCTION(BlueprintCallable)
+	void AttackResetComboExtention();
+
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TArray<FName> PossibleAttacks;
 
