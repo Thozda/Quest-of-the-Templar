@@ -72,6 +72,14 @@ private:
 	UHealthBarComponent* HealthBarWidget;
 
 	//
+	//Keys
+	//
+	void SpawnKey();
+	
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AActor> Key;
+
+	//
 	//Souls
 	//
 	void SpawnSoul();

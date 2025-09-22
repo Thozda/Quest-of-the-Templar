@@ -49,6 +49,7 @@ public:
 	virtual void SetOverlappingItem(AActor* Item) override;
 	virtual void AddSouls(ASoul* Soul) override;
 	virtual void AddGold(ATreasure* Treasure) override;
+	virtual void AddKey() override;
 
 protected:
 	virtual void BeginPlay() override;

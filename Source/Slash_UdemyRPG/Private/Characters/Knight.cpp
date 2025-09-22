@@ -286,6 +286,11 @@ void AKnight::AddGold(ATreasure* Treasure)
 	}
 }
 
+void AKnight::AddKey()
+{
+	KeysHeld++;
+}
+
 //
 //Equip
 //

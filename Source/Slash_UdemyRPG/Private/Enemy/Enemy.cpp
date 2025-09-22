@@ -314,6 +314,7 @@ void AEnemy::Die_Implementation()
 	SetLifeSpan(DeathLifeSpan);
 	SetWeaponCanDamage(false);
 	SpawnSoul();
+	SpawnKey();
 	if (BossArena) BossArena->Destroy();
 }
 
@@ -355,5 +356,15 @@ void AEnemy::SpawnSoul()
 			SpawnedSoul->SetOwner(this);
 			SpawnedSoul->GetSphere()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		}
+	}
+}
+
+void AEnemy::SpawnKey()
+{
+	UWorld* World = GetWorld();
+	if (World && Key)
+	{
+		const FVector SpawnLocation = GetActorLocation() + FVector(0.f, 0.f, 50.f);
+		World->SpawnActor<AActor>(Key, SpawnLocation, GetActorRotation());
 	}
 }
