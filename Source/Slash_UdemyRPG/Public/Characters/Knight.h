@@ -50,6 +50,8 @@ public:
 	virtual void AddSouls(ASoul* Soul) override;
 	virtual void AddGold(ATreasure* Treasure) override;
 	virtual void AddKey() override;
+	//Boss
+	void PlayBossMusic(USoundBase* BossMusic);
 
 protected:
 	virtual void BeginPlay() override;
@@ -59,6 +61,9 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	USoundBase* ExertMetaSound;
+
+	UPROPERTY(EditAnywhere)
+	USoundBase* WindMetaSound;
 
 	//
 	//Enhanced Input Variables
@@ -157,6 +162,19 @@ private:
 	UPROPERTY(VisibleInstanceOnly)
 	AActor* OverlappingActor;
 
+	UPROPERTY(VisibleAnywhere)
+	UAudioComponent* WindAmbience;
+
+	UPROPERTY(VisibleAnywhere)
+	UAudioComponent* BossFightMusic;
+
+	//
+	//Audio
+	//
+	void PlayWindAmbience();
+
+	FTimerHandle WindAmbienceTimer;
+	
 	//
 	//Upgrades
 	//

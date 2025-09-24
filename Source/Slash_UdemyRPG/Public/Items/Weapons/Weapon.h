@@ -46,6 +46,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	USoundBase* EquipSound;
 
+	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+	bool bIsTwoHanded = false;
+
 	//
 	//Damage
 	//
@@ -83,4 +86,5 @@ public:
 	FORCEINLINE void SetCanDamage(bool state) { bCanDamage = state; }
 	FORCEINLINE float GetBaseDamage() const { return BaseDamage; }
 	FORCEINLINE void SetDamageAmount(float Amount) { Damage = Amount; }
+	FORCEINLINE bool GetIsTwoHanded() const { return bIsTwoHanded; }
 };

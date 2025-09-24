@@ -4,6 +4,7 @@
 #include "Volumes/BossArena.h"
 #include "Components/BoxComponent.h"
 #include "Enemy/Enemy.h"
+#include "Characters/Knight.h"
 
 ABossArena::ABossArena()
 {
@@ -53,9 +54,11 @@ void ABossArena::Tick(float DeltaTime)
 void ABossArena::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor && OtherActor->ActorHasTag(FName("Knight")))
+	if (OtherActor && Cast<AKnight>(OtherActor))
 	{
 		if (Boss) Boss->LookAtPlayer(OtherActor);
+
+		Cast<AKnight>(OtherActor)->PlayBossMusic(BossMusic);
 		
 		for (UBoxComponent* Wall : Walls)
 		{

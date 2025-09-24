@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/AttributeComponent.h"
+#include "Components/AudioComponent.h"
 #include "Items/Weapons/Weapon.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -17,6 +18,7 @@
 #include "Items/Treasure.h"
 #include "Volumes/Campfire.h"
 #include "Volumes/MountainDoor.h"
+#include "TimerManager.h"
 
 AKnight::AKnight()
 {
@@ -44,6 +46,12 @@ AKnight::AKnight()
 
 	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ViewCamera"));
 	ViewCamera->SetupAttachment(SpringArm);
+
+	WindAmbience = CreateDefaultSubobject<UAudioComponent>(TEXT("Wind Ambience Audio Component"));
+	WindAmbience->SetupAttachment(GetRootComponent());
+	
+	BossFightMusic = CreateDefaultSubobject<UAudioComponent>(TEXT("Boss Arena Music Audio Component"));
+	BossFightMusic->SetupAttachment(GetRootComponent());
 }
 
 void AKnight::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -72,6 +80,8 @@ void AKnight::BeginPlay()
 		InitialiseEnhancedInput(PlayerController);
 		InitialiseOverlay(PlayerController);
 	}
+	
+	PlayWindAmbience();
 
 	Tags.Add(FName("Knight"));
 
@@ -122,6 +132,30 @@ void AKnight::Tick(float DeltaTime)
 	{
 		Attributes->RegenStamina(DeltaTime);
 		Overlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+	}
+}
+
+//
+//Audio
+//
+void AKnight::PlayWindAmbience()
+{
+	if (WindAmbience && WindMetaSound)
+	{
+		WindAmbience->SetSound(WindMetaSound);
+		WindAmbience->Play();
+		
+		float Delay = FMath::RandRange(45.f, 90.f);
+		GetWorldTimerManager().SetTimer(WindAmbienceTimer, this, &AKnight::PlayWindAmbience, Delay, false);
+	}
+}
+
+void AKnight::PlayBossMusic(USoundBase* BossMusic)
+{
+	if (BossFightMusic && BossMusic)
+	{
+		BossFightMusic->SetSound(BossMusic);
+		BossFightMusic->Play();
 	}
 }
 
@@ -205,11 +239,13 @@ void AKnight::Interact(const FInputActionValue& Value)
 		if (EquippedWeapon) EquippedWeapon->Destroy();
 		EquipWeapon(OverlappingWeapon);
 	}
-	else if (Cast<AMountainDoor>(OverlappingActor) && KeysHeld >= KeysRequired && TeleportTarget && GetController())
+	else if (Cast<AMountainDoor>(OverlappingActor) && KeysHeld >= KeysRequired && TeleportTarget && GetController() && WindAmbience)
 	{
 		SetActorLocationAndRotation(TeleportTarget->GetActorLocation(), TeleportTarget->GetActorRotation());
 		GetController()->SetControlRotation(GetActorRotation());
 		OverlappingActor = nullptr;
+		WindAmbience->Stop();
+		GetWorldTimerManager().ClearTimer(WindAmbienceTimer);
 	}
 }
 
@@ -298,7 +334,14 @@ void AKnight::EquipWeapon(AWeapon* Weapon)
 {
 	Weapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
 	OverlappingActor = nullptr;
-	CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
+	if (Weapon && Weapon->GetIsTwoHanded())
+	{
+		CharacterState = ECharacterState::ECS_EquippedTwoHandedWeapon;
+	}
+	else
+	{
+		CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
+	}
 	EquippedWeapon = Weapon;
 }
 
@@ -334,7 +377,14 @@ void AKnight::Disarm()
 void AKnight::Arm()
 {
 	PlayArmMontage(FName("Equip"));
-	CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
+	if (EquippedWeapon && EquippedWeapon->GetIsTwoHanded())
+	{
+		CharacterState = ECharacterState::ECS_EquippedTwoHandedWeapon;
+	}
+	else
+	{
+		CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
+	}
 	ActionState = EActionState::EAS_EquippingWeapon;
 }
 
