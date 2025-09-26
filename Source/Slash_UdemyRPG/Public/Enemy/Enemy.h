@@ -210,9 +210,26 @@ private:
 	FTimerHandle ComboResetTimerHandle;
 
 	FORCEINLINE void ClearAttackTimer() { GetWorldTimerManager().ClearTimer(AttackTimer); }
-	FORCEINLINE bool IsDead() const { return EnemyState == EEnemyState::EES_Dead; }
 	FORCEINLINE bool IsEngaged() const { return EnemyState == EEnemyState::EES_Engaged; }
 
 public:	
 	FORCEINLINE bool IsBoss() const { return bIsBoss; }
+	FORCEINLINE UAttributeComponent* GetAttributes() const { return Attributes; }
+	FORCEINLINE AWeapon* GetWeapon() const { return EquippedWeapon; }
+	FORCEINLINE AActor* GetPatrolTarget() const { return PatrolTarget; }
+	void SetPatrolTarget(FString TargetName);
+	FORCEINLINE int32 GetPatrolPointIndex() const { return PatrolPointIndex; }
+	FORCEINLINE void SetPatrolPointIndex(int32 NewPatrolPointIndex) { PatrolPointIndex = NewPatrolPointIndex; }
+	FORCEINLINE float GetPatrolTimerRemaining() const { return GetWorldTimerManager().GetTimerRemaining(PatrolTimer); }
+	FORCEINLINE float GetAttackTimerRemaining() const { return GetWorldTimerManager().GetTimerRemaining(AttackTimer); }
+	FORCEINLINE float GetComboResetTimerRemaining() const { return GetWorldTimerManager().GetTimerRemaining(ComboResetTimerHandle); }
+	FORCEINLINE float GetAttackResetTimerRemaining() const { return GetWorldTimerManager().
+		GetTimerRemaining(AttackResetTimer); }
+	FORCEINLINE int32 GetCurrentAttackIndex() const { return CurrentAttackIndex; }
+	FORCEINLINE void SetCurrentAttackIndex(int32 NewAttackIndex) { CurrentAttackIndex = NewAttackIndex; }
+	FORCEINLINE bool bHasPatrolTarget() { if (PatrolTarget) return true; return false;}
+	FORCEINLINE bool IsDead() const { return EnemyState == EEnemyState::EES_Dead; }
+	FORCEINLINE bool bIsPatrolling() { return EnemyState == EEnemyState::EES_Patrolling;}
+	FORCEINLINE EEnemyState GetEnemyState() const { return EnemyState; }
+	FORCEINLINE void SetEnemyState(EEnemyState NewState) { EnemyState = NewState; }
 };

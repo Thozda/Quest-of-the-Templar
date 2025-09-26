@@ -7,6 +7,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/AttributeComponent.h"
 #include "Components/SphereComponent.h"
+#include "Engine/TargetPoint.h"
 #include "HUD/HealthBarComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/PawnSensingComponent.h"
@@ -148,6 +149,25 @@ void AEnemy::LookAtPlayer(const AActor* Player)
 		NewRotation.Pitch = 0.f;
 		NewRotation.Roll = 0.f;
 		SetActorRotation(NewRotation);
+	}
+}
+
+void AEnemy::SetPatrolTarget(FString TargetName)
+{
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	TArray<AActor*> AllPatrolPoints;
+	UGameplayStatics::GetAllActorsOfClass(World, ATargetPoint::StaticClass(), AllPatrolPoints);
+	if (AllPatrolPoints.Num() == 0) return;
+
+	for (AActor* PatrolPoint : AllPatrolPoints)
+	{
+		if (PatrolPoint->GetName() == TargetName)
+		{
+			PatrolTarget = PatrolPoint;
+			return;
+		}
 	}
 }
 

@@ -231,7 +231,11 @@ private:
 
 public:
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
+	FORCEINLINE void SetCharacterState(ECharacterState NewState) { CharacterState = NewState; }
 	FORCEINLINE void SetActionState(EActionState state) { ActionState = state; }
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }
 	FORCEINLINE TEnumAsByte<ECharacterDeathPose> GetCharacterDeathPose() const { return CharacterDeathPose; }
+	FORCEINLINE UAttributeComponent* GetAttributes() const { return Attributes; }
+	FORCEINLINE int32 GetKeysHeld() const { return KeysHeld; }
+	FORCEINLINE void SetKeysHeld(int32 NewKeys) { KeysHeld = NewKeys; }
 };

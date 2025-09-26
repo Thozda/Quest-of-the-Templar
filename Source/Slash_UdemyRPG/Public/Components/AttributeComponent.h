@@ -86,24 +86,40 @@ private:
 	
 public:
 	//
+	//Level
+	//
+	FORCEINLINE int32 GetLevel() const { return Level; }
+	FORCEINLINE void SetLevel(int32 NewLevel) { Level = NewLevel; }
+	//
 	//Health
 	//
 	FORCEINLINE void RevieceDamage(float Damage);
 	FORCEINLINE bool IsAlive() const { return Health > 0.f; }
+	FORCEINLINE float GetHealth() const { return Health; }
+	FORCEINLINE void SetHealth(float NewHealth) { Health = NewHealth; }
+	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
+	FORCEINLINE void SetMaxHealth(float NewMaxHealth) { MaxHealth = NewMaxHealth; }
 	FORCEINLINE float GetHealthPercent() const { return Health / MaxHealth; }
 
 	//
 	//Attack
 	//
 	FORCEINLINE float GetLightDamageMultiplier() const { return LightDamageMultiplier; }
+	FORCEINLINE void SetLightDamageMultiplier(float NewMultiplier) { LightDamageMultiplier = NewMultiplier; }
 	FORCEINLINE float GetHeavyDamageMultiplier() const { return HeavyDamageMultiplier; }
+	FORCEINLINE void SetHeavyDamageMultiplier(float NewMultiplier) { HeavyDamageMultiplier = NewMultiplier; }
 	
 	//
 	//Stamina
 	//
 	FORCEINLINE void UseStamina(float Quantity);
 	FORCEINLINE int32 GetStamina() const { return Stamina; }
+	FORCEINLINE void SetStamina(int32 NewStamina) { Stamina = NewStamina; }
+	FORCEINLINE int32 GetMaxStamina() const { return MaxStamina; }
+	FORCEINLINE void SetMaxStamina(int32 NewMaxStamina) { MaxStamina = NewMaxStamina; }
 	FORCEINLINE float GetStaminaPercent() const { return Stamina / MaxStamina; }
+	FORCEINLINE float GetStaminaRegenRate() const { return StaminaRegenRate; }
+	FORCEINLINE void SetStaminaRegenRate(float NewStaminaRegenRate) { StaminaRegenRate = NewStaminaRegenRate;}
 	FORCEINLINE void RegenStamina(float DeltaTime);
 	FORCEINLINE int32 GetDodgeCost() const { return DodgeCost; }
 	FORCEINLINE int32 GetLightAttackCost() const { return LightAttackCost; }
@@ -113,9 +129,15 @@ public:
 	//Currencies
 	//
 	FORCEINLINE int32 GetGold() const { return Gold; }
+	FORCEINLINE void SetGold(int32 NewGold) { Gold = NewGold; }
 	FORCEINLINE void AddGold(int32 Quantity) { Gold += Quantity; }
+	FORCEINLINE int32 GetNextUpgradeGoldCost() const { return NextUpgradeGoldCost; }
+	FORCEINLINE void SetNextUpgradeGoldCost(int32 NewGoldCost) { NextUpgradeGoldCost = NewGoldCost; }
 	FORCEINLINE int32 GetSouls() const { return Souls; }
+	FORCEINLINE void SetSouls(int32 NewSouls) { Souls = NewSouls; }
 	FORCEINLINE int32 GetMinSouls() const { return MinSouls; }
 	FORCEINLINE int32 GetMaxSouls() const { return MaxSouls; }
 	FORCEINLINE void AddSouls(int32 Quantity) { Souls += Quantity; }
+	FORCEINLINE int32 GetNextUpgradeSoulCost() const { return NextUpgradeSoulCost; }
+	FORCEINLINE void SetNextUpgradeSoulCost(int32 Soulcost) { NextUpgradeSoulCost = Soulcost; }
 };

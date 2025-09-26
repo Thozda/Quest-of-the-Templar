@@ -23,4 +23,5 @@ private:
 
 public:
 	FORCEINLINE int32 GetGold() const { return Gold; }
+	FORCEINLINE void SetGold(int32 NewGold) { Gold = NewGold; }
 };
