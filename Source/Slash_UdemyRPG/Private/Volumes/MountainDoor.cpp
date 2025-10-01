@@ -3,7 +3,6 @@
 
 #include "Volumes/MountainDoor.h"
 
-#include "IDetailTreeNode.h"
 #include "Components/BoxComponent.h"
 #include "HUD/CampfireWidgetComponent.h"
 #include "Interfaces/InteractInterface.h"
