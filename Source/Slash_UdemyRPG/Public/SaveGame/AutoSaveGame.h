@@ -4,9 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Characters/CharacterTypes.h"
+#include "Enemy/Enemy.h"
 #include "GameFramework/SaveGame.h"
+#include "Items/Item.h"
+#include "Items/Weapons/Weapon.h"
 #include "AutoSaveGame.generated.h"
 
+class AEnemy;
 class AItem;
 class AWeapon;
 enum class EEnemyState : uint8;
@@ -31,14 +35,17 @@ struct FEnemySaveData
     float Health;
 
     UPROPERTY(VisibleAnywhere, Category = "Enemy")
-    FString EnemyType;
+    FSoftClassPath EnemyClass;
 
     UPROPERTY(VisibleAnywhere, Category = "Enemy")
     EEnemyState EnemyState;
 
     // Store weapon as string identifier instead of pointer
     UPROPERTY(VisibleAnywhere, Category = "Enemy")
-    FString WeaponTypeName;
+    FSoftClassPath WeaponType;
+    
+    UPROPERTY(VisibleAnywhere, Category = "Enemy")
+    TArray<FSoftObjectPath> PatrolPoints;
 
     UPROPERTY(VisibleAnywhere, Category = "Enemy")
     FString PatrolPointName;
@@ -77,9 +84,9 @@ struct FEnemySaveData
         Location = FVector::ZeroVector;
         Rotation = FRotator::ZeroRotator;
         Health = 100.0f;
-        EnemyType = TEXT("");
+        EnemyClass = AEnemy::StaticClass();
         EnemyState = EEnemyState::EES_NoState;
-        WeaponTypeName = TEXT("");
+        WeaponType = AWeapon::StaticClass();
         PatrolPointName = TEXT("");
         PatrolPointIndex = 0;
         PatrolTimerRemaining = 0.0f;
@@ -106,7 +113,7 @@ struct FTreasureSaveData
 
     // Store as string for reliable serialization
     UPROPERTY(VisibleAnywhere, Category = "Treasure")
-    FString TreasureClassName;
+    FSoftClassPath TreasureClass;
 
     UPROPERTY(VisibleAnywhere, Category = "Treasure")
     int32 Value;
@@ -114,7 +121,7 @@ struct FTreasureSaveData
     FTreasureSaveData()
     {
         Location = FVector::ZeroVector;
-        TreasureClassName = TEXT("");
+        TreasureClass = AItem::StaticClass();
         Value = 0;
     }
 };
@@ -151,6 +158,9 @@ public:
     UPROPERTY(VisibleAnywhere, Category = "Player")
     EActionState PlayerActionState;
 
+    UPROPERTY(VisibleAnywhere, Category = "Player")
+    FSoftClassPath PlayerWeapon;
+    
     UPROPERTY(VisibleAnywhere, Category = "Player")
     int32 PlayerLevel;
     

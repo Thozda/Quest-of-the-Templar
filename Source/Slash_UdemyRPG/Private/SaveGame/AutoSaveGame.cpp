@@ -11,6 +11,7 @@ UAutoSaveGame::UAutoSaveGame()
 	// Initialize player data with defaults
 	PlayerLocation = FVector::ZeroVector;
 	PlayerRotation = FRotator::ZeroRotator;
+	PlayerWeapon = AWeapon::StaticClass();
 	PlayerLevel = 1;
 	PlayerHealth = 100.0f;
 	PlayerMaxHealth = 100.0f;

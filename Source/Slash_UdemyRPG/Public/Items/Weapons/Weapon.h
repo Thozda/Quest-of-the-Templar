@@ -49,6 +49,8 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	bool bIsTwoHanded = false;
 
+	bool bIsEquipped = false;
+
 	//
 	//Damage
 	//
@@ -87,4 +89,5 @@ public:
 	FORCEINLINE float GetBaseDamage() const { return BaseDamage; }
 	FORCEINLINE void SetDamageAmount(float Amount) { Damage = Amount; }
 	FORCEINLINE bool GetIsTwoHanded() const { return bIsTwoHanded; }
+	FORCEINLINE bool GetIsEquipped() const { return bIsEquipped; }
 };

@@ -5,6 +5,10 @@
 #include "Components/BoxComponent.h"
 #include "Enemy/Enemy.h"
 #include "Characters/Knight.h"
+#include "Components/SaveSystemComponent.h"
+#include "GameMode/SlashGameMode.h"
+
+class ASlashGameMode;
 
 ABossArena::ABossArena()
 {
@@ -59,6 +63,10 @@ void ABossArena::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 		if (Boss) Boss->LookAtPlayer(OtherActor);
 
 		Cast<AKnight>(OtherActor)->PlayBossMusic(BossMusic);
+		
+		ASlashGameMode* GameMode = Cast<ASlashGameMode>(GetWorld()->GetAuthGameMode());
+		if (GameMode && GameMode->GetSaveSystem()) GameMode->GetSaveSystem()->SaveGame();
+		else UE_LOG(LogTemp, Warning, TEXT("Failed to get game mode : Boss Arena"));
 		
 		for (UBoxComponent* Wall : Walls)
 		{

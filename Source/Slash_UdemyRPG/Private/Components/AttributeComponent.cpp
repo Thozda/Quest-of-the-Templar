@@ -3,6 +3,8 @@
 
 #include "Components/AttributeComponent.h"
 
+#include "Components/SaveSystemComponent.h"
+#include "GameMode/SlashGameMode.h"
 #include "Math/UnitConversion.h"
 
 UAttributeComponent::UAttributeComponent()
@@ -42,6 +44,10 @@ bool UAttributeComponent::Upgrade()
 {
 	if (Souls >= NextUpgradeSoulCost && Gold >= NextUpgradeGoldCost)
 	{
+		ASlashGameMode* GameMode = Cast<ASlashGameMode>(GetWorld()->GetAuthGameMode());
+		if (GameMode && GameMode->GetSaveSystem()) GameMode->GetSaveSystem()->SaveGame();
+		else UE_LOG(LogTemp, Warning, TEXT("Failed to get game mode : Attribute Component"));
+		
 		Level++;
 		Gold -= NextUpgradeGoldCost;
 		NextUpgradeGoldCost += 50;

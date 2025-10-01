@@ -28,6 +28,9 @@ public:
 	
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 
+	void RestoreTimers(float PatrolRemaining, float AttackRemaining, float AttackResetRemaining, float ComboRemaining);
+	void LoadedPatrolling();
+	
 	//Called by Arena when player enters -> Bosses only
 	void LookAtPlayer(const AActor* Player);
 
@@ -210,6 +213,7 @@ private:
 	FTimerHandle ComboResetTimerHandle;
 
 	FORCEINLINE void ClearAttackTimer() { GetWorldTimerManager().ClearTimer(AttackTimer); }
+	FORCEINLINE void ResetAttackindex() { CurrentAttackIndex = 0; }
 	FORCEINLINE bool IsEngaged() const { return EnemyState == EEnemyState::EES_Engaged; }
 
 public:	
@@ -232,4 +236,7 @@ public:
 	FORCEINLINE bool bIsPatrolling() { return EnemyState == EEnemyState::EES_Patrolling;}
 	FORCEINLINE EEnemyState GetEnemyState() const { return EnemyState; }
 	FORCEINLINE void SetEnemyState(EEnemyState NewState) { EnemyState = NewState; }
+	FORCEINLINE FName GetWeaponSocket() const { return WeaponSocket; }
+	FORCEINLINE TArray<AActor*> GetPatrolPoints() const { return PatrolTargets; }
+	FORCEINLINE void AddPatrolTarget(AActor* Point) { PatrolTargets.Add(Point); }
 };

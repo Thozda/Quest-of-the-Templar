@@ -18,6 +18,10 @@ class SLASH_UDEMYRPG_API ASlashGameMode : public AGameModeBase
 public:
 	ASlashGameMode();
 	
+	FORCEINLINE USaveSystemComponent* GetSaveSystem() const { return SaveSystemComponent; }
 protected:
+	virtual void BeginPlay() override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USaveSystemComponent* SaveSystemComponent;
 };

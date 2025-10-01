@@ -117,6 +117,7 @@ void USaveSystemComponent::SavePlayerData(UAutoSaveGame* SaveGame)
 	SaveGame->PlayerRotation = Knight->GetActorRotation();
 	SaveGame->PlayerCharacterState = Knight->GetCharacterState();
 	SaveGame->PlayerActionState = Knight->GetActionState();
+	SaveGame->PlayerWeapon = Knight->GetEquippedWeapon()->GetClass();
 	SaveGame->PlayerLevel = KnightAttributes->GetLevel();
 	SaveGame->PlayerHealth = KnightAttributes->GetHealth();
 	SaveGame->PlayerMaxHealth = KnightAttributes->GetMaxHealth();
@@ -151,12 +152,20 @@ void USaveSystemComponent::SaveEnemyData(UAutoSaveGame* SaveGame)
 		EnemyData.Location = Enemy->GetActorLocation();
 		EnemyData.Rotation = Enemy->GetActorRotation();
 		EnemyData.Health = EnemyAttributes->GetHealth();
-		EnemyData.EnemyType = Enemy->GetName();
+		if (Enemy->GetClass()) EnemyData.EnemyClass = Enemy->GetClass();
 		EnemyData.EnemyState = Enemy->GetEnemyState();
 		
 		if (Enemy->GetWeapon() && Enemy->GetWeapon()->GetClass())
 		{
-			EnemyData.WeaponTypeName = Enemy->GetWeapon()->GetClass()->GetName();
+			EnemyData.WeaponType = Enemy->GetWeapon()->GetClass();
+		}
+		if (Enemy->GetPatrolPoints().Num() > 0)
+		{
+			for (AActor* Point : Enemy->GetPatrolPoints())
+			{
+				if (Point) EnemyData.PatrolPoints.Add(Point);
+			}
+			UE_LOG(LogTemp, Warning, TEXT("Saving: %d, %d"), Enemy->GetPatrolPoints().Num(), EnemyData.PatrolPoints.Num())
 		}
 		if (Enemy->GetPatrolTarget())
 		{
@@ -190,9 +199,8 @@ void USaveSystemComponent::SaveTreasureData(UAutoSaveGame* SaveGame)
 	TArray<AActor*> ItemsFound;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AItem::StaticClass(), ItemsFound);
 	
-	for (int32 i = 0; i < ItemsFound.Num(); i++)
+	for (AActor* ActorObject : ItemsFound)
 	{
-		AActor* ActorObject = ItemsFound[i];
 		AItem* Item = Cast<AItem>(ActorObject);
 		if (Item == nullptr) continue;
 
@@ -201,7 +209,7 @@ void USaveSystemComponent::SaveTreasureData(UAutoSaveGame* SaveGame)
 
 		if (Item->GetClass())
 		{
-			ItemData.TreasureClassName = Item->GetClass()->GetName();
+			ItemData.TreasureClass = Item->GetClass();
 		}
 		
 		if (ATreasure* Treasure = Cast<ATreasure>(Item))
@@ -214,6 +222,7 @@ void USaveSystemComponent::SaveTreasureData(UAutoSaveGame* SaveGame)
 		}
 		else if (AWeapon* Weapon = Cast<AWeapon>(Item))
 		{
+			if (Weapon->GetIsEquipped()) continue;
 			ItemData.Value = 0;
 		}
 
@@ -241,7 +250,23 @@ void USaveSystemComponent::LoadPlayerData(UAutoSaveGame* LoadedGame)
 	// Load character states
 	Knight->SetCharacterState(LoadedGame->PlayerCharacterState);
 	Knight->SetActionState(LoadedGame->PlayerActionState);
-    
+
+	//Load Weapon
+	UClass* WeaponClass = nullptr;
+	if (UClass* LoadedClass = LoadedGame->PlayerWeapon.TryLoadClass<AWeapon>())
+	{
+		WeaponClass = LoadedClass;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to load class: %s"), *LoadedGame->PlayerWeapon.GetAssetName())
+	}
+	AWeapon* Weapon = GetWorld()->SpawnActor<AWeapon>(WeaponClass, LoadedGame->PlayerLocation, LoadedGame->PlayerRotation);
+	if (Weapon)
+	{
+		Knight->EquipWeapon(Weapon);
+	}
+	
 	// Load attributes
 	KnightAttributes->SetLevel(LoadedGame->PlayerLevel);
 	KnightAttributes->SetHealth(LoadedGame->PlayerHealth);
@@ -272,47 +297,76 @@ void USaveSystemComponent::LoadEnemyData(UAutoSaveGame* LoadedGame)
         FActorSpawnParameters SpawnParams;
         SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-        // You'll need to determine which enemy class to spawn based on EnemyType
-        // For now, using a default enemy class - you may need to expand this
-        AEnemy* SpawnedEnemy = World->SpawnActor<AEnemy>(
-            AEnemy::StaticClass(), // You might want to make this more specific
+    	// Get the item class from the saved class name
+    	UClass* EnemyClass = nullptr;
+
+    	if (UClass* LoadedClass = EnemyData.EnemyClass.TryLoadClass<AEnemy>())
+    	{
+    		EnemyClass = LoadedClass;
+    	}
+    	else
+    	{
+    		UE_LOG(LogTemp, Warning, TEXT("Failed to load class: %s"), *EnemyData.EnemyClass.GetAssetName())
+    	}
+    	
+    	if (!EnemyClass) continue;
+        
+		AEnemy* SpawnedEnemy = World->SpawnActor<AEnemy>(
+            EnemyClass,
             EnemyData.Location, 
             EnemyData.Rotation, 
             SpawnParams
         );
-
+    	
         if (SpawnedEnemy && SpawnedEnemy->GetAttributes())
         {
             // Restore enemy data
             SpawnedEnemy->GetAttributes()->SetHealth(EnemyData.Health);
             SpawnedEnemy->SetEnemyState(EnemyData.EnemyState);
             SpawnedEnemy->SetCurrentAttackIndex(EnemyData.CurrentAttackIndex);
-            SpawnedEnemy->SetPatrolPointIndex(EnemyData.PatrolPointIndex);
-            
-            // Restore weapon if needed
-            if (!EnemyData.WeaponTypeName.IsEmpty())
-            {
-                AWeapon* Weapon = CreateWeaponFromName(EnemyData.WeaponTypeName);
-                if (Weapon)
-                {
-                    //SpawnedEnemy->SetWeapon(Weapon);
-                }
-            }
-            
+            SpawnedEnemy->SetPatrolPointIndex(FMath::Clamp(EnemyData.PatrolPointIndex - 1, 0, EnemyData.PatrolPoints.Num() - 1));
+
+        	for (const FSoftObjectPath& Point : EnemyData.PatrolPoints)
+        	{
+        		if (AActor* Loaded = Cast<AActor>(Point.ResolveObject()))
+        		{
+        			SpawnedEnemy->AddPatrolTarget(Loaded);
+        		}
+        	}
+        	SpawnedEnemy->LoadedPatrolling();
+			UE_LOG(LogTemp, Warning, TEXT("Loading: %d, %d"), SpawnedEnemy->GetPatrolPoints().Num(), EnemyData.PatrolPoints.Num())
+        	
+            /* Restore weapon if needed
+			UClass* WeaponClass = nullptr;
+        	if (UClass* LoadedClass = EnemyData.EnemyClass.TryLoadClass<AWeapon>())
+        	{
+        		WeaponClass = LoadedClass;
+        	}
+        	else
+        	{
+        		UE_LOG(LogTemp, Warning, TEXT("Failed to load class: %s"), *EnemyData.EnemyClass.GetAssetName())
+        	}
+        	
+        	AWeapon* Weapon = World->SpawnActor<AWeapon>(WeaponClass, EnemyData.Location, EnemyData.Rotation);
+        	if (Weapon)
+        	{
+        		Weapon->Equip(SpawnedEnemy->GetMesh(), SpawnedEnemy->GetWeaponSocket(), SpawnedEnemy, SpawnedEnemy);
+        	}
+            */
             // Restore patrol data
+        	
+        	// Restore timers with remaining time
+        	SpawnedEnemy->RestoreTimers(
+				EnemyData.PatrolTimerRemaining,
+				EnemyData.AttackTimerRemaining,
+				EnemyData.AttackResetTimerRemaining,
+				EnemyData.ComboResetTimerRemaining
+			);
+            
             if (EnemyData.bHasPatrolTarget)
             {
                 SpawnedEnemy->SetPatrolTarget(EnemyData.PatrolPointName);
             }
-            
-            /* Restore timers with remaining time
-            SpawnedEnemy->RestoreTimers(
-                EnemyData.PatrolTimerRemaining,
-                EnemyData.AttackTimerRemaining,
-                EnemyData.AttackResetTimerRemaining,
-                EnemyData.ComboResetTimerRemaining
-            );
-            */
         }
     }
 
@@ -327,7 +381,17 @@ void USaveSystemComponent::LoadTreasureData(UAutoSaveGame* LoadedGame)
 	for (const FTreasureSaveData& TreasureData : LoadedGame->TreasureData)
 	{
 		// Get the item class from the saved class name
-		UClass* ItemClass = GetTreasureClassFromName(TreasureData.TreasureClassName);
+		UClass* ItemClass = nullptr;
+		
+		if (UClass* LoadedClass = TreasureData.TreasureClass.TryLoadClass<AItem>())
+		{
+			ItemClass = LoadedClass;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Failed to load class: %s"), *TreasureData.TreasureClass.GetAssetName())
+		}
+		
 		if (!ItemClass) continue;
 
 		// Spawn item at saved location
@@ -417,14 +481,42 @@ UClass* USaveSystemComponent::GetTreasureClassFromName(const FString& ClassName)
 {
 	if (ClassName.IsEmpty()) return nullptr;
 
+	UClass* FoundClass = nullptr;
 	// Try to find the class by name
-	UClass* FoundClass = FindObject<UClass>(ANY_PACKAGE, *ClassName);
+	for (auto Treasure : TreasureClasses)
+	{
+		if (Treasure->GetClass()->GetName() == ClassName)
+		{
+			FoundClass = Treasure->GetClass();
+		}
+	}	
+
 	if (FoundClass && FoundClass->IsChildOf(AItem::StaticClass()))
 	{
 		return FoundClass;
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("Could not find item class: %s"), *ClassName);
+	return nullptr;
+}
+
+UClass* USaveSystemComponent::GetEnemyClassFromName(const FString& ClassName)
+{
+	if (ClassName.IsEmpty())
+	{
+		return nullptr;
+	}
+//UClass* EnemyClass = EnemyData.EnemyClassPath.TryLoadClass<AEnemy>();
+
+	for (TSubclassOf<AEnemy> EnemyClass : EnemyClasses)
+	{
+		if (EnemyClass && EnemyClass->GetName() == ClassName)
+		{
+			return EnemyClass;
+		}
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Could not find Enemy class: %s"), *ClassName);
 	return nullptr;
 }
 

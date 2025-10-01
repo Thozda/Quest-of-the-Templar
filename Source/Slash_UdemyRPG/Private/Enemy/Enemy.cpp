@@ -85,6 +85,38 @@ void AEnemy::InitializeWeapon()
 	}
 }
 
+void AEnemy::RestoreTimers(float PatrolRemaining, float AttackRemaining, float AttackResetRemaining,
+	float ComboRemaining)
+{
+	//UE_LOG(LogTemp, Warning, TEXT("%f, %f, %f, %f"), PatrolRemaining, AttackRemaining, 
+	//AttackResetRemaining, ComboRemaining)
+	if (PatrolRemaining > 0) GetWorldTimerManager().SetTimer(PatrolTimer, this, 
+	&AEnemy::PatrolTimerFinished, PatrolRemaining);
+	if (AttackRemaining > 0) GetWorldTimerManager().SetTimer(AttackTimer, this, 
+	&AEnemy::Attack, AttackRemaining);
+	if (AttackResetRemaining > 0) GetWorldTimerManager().SetTimer(AttackResetTimer, this, 
+	&AEnemy::AttackEnd, AttackResetRemaining);
+	if (ComboRemaining > 0) GetWorldTimerManager().SetTimer(ComboResetTimerHandle, this, 
+	&AEnemy::ResetAttackindex, ComboRemaining);
+	//if (EnemyState == EEnemyState::EES_Patrolling) StartPatrolling();
+}
+
+void AEnemy::LoadedPatrolling()
+{
+	if (PatrolTarget)
+	{
+		MoveToTarget(PatrolTarget);
+	}
+	else
+	{
+		if (PatrolTargets.Num() > 0)
+		{
+			PatrolTarget = PatrolTargets[PatrolPointIndex];
+			MoveToTarget(PatrolTarget);
+		}
+	}
+}
+
 void AEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -107,6 +139,10 @@ void AEnemy::CheckPatrolTarget()
 	{
 		GetWorldTimerManager().SetTimer(PatrolTimer, this, &AEnemy::PatrolTimerFinished,
 			FMath::RandRange(PatrolWaitMin, PatrolWaitMax));
+	}
+	else
+	{
+		StartPatrolling();
 	}
 }
 
@@ -154,13 +190,18 @@ void AEnemy::LookAtPlayer(const AActor* Player)
 
 void AEnemy::SetPatrolTarget(FString TargetName)
 {
+	/*
 	UWorld* World = GetWorld();
 	if (!World) return;
 
 	TArray<AActor*> AllPatrolPoints;
 	UGameplayStatics::GetAllActorsOfClass(World, ATargetPoint::StaticClass(), AllPatrolPoints);
-	if (AllPatrolPoints.Num() == 0) return;
-
+	if (AllPatrolPoints.Num() == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No Patrol Points Found"))
+		return;
+	}
+	
 	for (AActor* PatrolPoint : AllPatrolPoints)
 	{
 		if (PatrolPoint->GetName() == TargetName)
@@ -169,6 +210,9 @@ void AEnemy::SetPatrolTarget(FString TargetName)
 			return;
 		}
 	}
+	*/
+
+	NewPatrolTarget();
 }
 
 void AEnemy::StartPatrolling()
@@ -203,10 +247,12 @@ void AEnemy::MoveToTarget(AActor* Target)
 
 bool AEnemy::NewPatrolTarget()
 {
+	UE_LOG(LogTemp, Warning, TEXT("%d"), PatrolTargets.Num())
 	if (PatrolTargets.Num() <= 0) return false;
 
 	PatrolPointIndex = (PatrolPointIndex + 1) % PatrolTargets.Num();
 	PatrolTarget = PatrolTargets[PatrolPointIndex];
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *PatrolTarget->GetName())
 	return true;
 }
 

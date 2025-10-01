@@ -50,6 +50,7 @@ void AWeapon::Tick(float DeltaTime)
 void AWeapon::Equip(USceneComponent* InParent, FName InSocket, AActor* NewOwner, APawn* NewInstigator)
 {
 	ItemState = EItemState::EIS_Equipped;
+	bIsEquipped = true;
 	SetOwner(NewOwner);
 	SetInstigator(NewInstigator);
 	AttachMeshToSocket(InParent, InSocket);

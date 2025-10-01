@@ -36,6 +36,10 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	//EnemyClasses
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AEnemy> ShieldCrusader;
+	
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -55,6 +59,7 @@ public:
 	FString GetWeaponTypeName(AWeapon* Weapon);
 	AWeapon* CreateWeaponFromName(const FString& WeaponName);
 	UClass* GetTreasureClassFromName(const FString& ClassName);
+	UClass* GetEnemyClassFromName(const FString& ClassName);
 
 	// Configurable properties
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save System", meta = (AllowPrivateAccess = "true"))
@@ -65,7 +70,7 @@ public:
 
 	// Enemy and Treasure class references for spawning
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save System", meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<AEnemy> DefaultEnemyClass; // Set this in Blueprint
+	TArray<TSubclassOf<AEnemy>> EnemyClasses; // Set these in Blueprint
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save System", meta = (AllowPrivateAccess = "true"))
 	TArray<TSubclassOf<AItem>> TreasureClasses; // Set these in Blueprint

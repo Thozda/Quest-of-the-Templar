@@ -38,6 +38,7 @@ public:
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 	//Interact
 	virtual void SetOverlappingActor(AActor* Actor) override;
+	void EquipWeapon(AWeapon* Weapon);
 	virtual UCameraComponent* GetDoorTextTarget() override;
 	virtual FString DoorText() override;
 	//Upgrades
@@ -218,7 +219,6 @@ private:
 	//Attack
 	//
 	virtual bool CanAttack() override;
-	void EquipWeapon(AWeapon* Weapon);
 
 	int32 CurrentLightAttackIndex = 0;
 	int32 CurrentHeavyAttackIndex = 0;
@@ -238,4 +238,5 @@ public:
 	FORCEINLINE UAttributeComponent* GetAttributes() const { return Attributes; }
 	FORCEINLINE int32 GetKeysHeld() const { return KeysHeld; }
 	FORCEINLINE void SetKeysHeld(int32 NewKeys) { KeysHeld = NewKeys; }
+	FORCEINLINE AWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
 };
