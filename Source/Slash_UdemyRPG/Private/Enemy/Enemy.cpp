@@ -364,7 +364,11 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 	StopAttackMontage();
 	SetWeaponCanDamage(false);
 	if (!IsDead()) EnemyState = EEnemyState::EES_HitReaction;
-	else Cast<AKnight>(Hitter)->StopBossMusic();
+	else
+	{
+		Cast<AKnight>(Hitter)->StopBossMusic();
+		Cast<AKnight>(Hitter)->ResetHealth();
+	}
 	//if (IsInsideAttackRadius() && !IsDead()) StartAttackTimer();
 }
 

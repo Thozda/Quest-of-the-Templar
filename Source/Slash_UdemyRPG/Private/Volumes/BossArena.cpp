@@ -111,7 +111,7 @@ void ABossArena::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
         {
             if (GameMode->GetSaveSystem())
             {
-                GameMode->GetSaveSystem()->SaveGame();
+                //GameMode->GetSaveSystem()->SaveGame();
             }
         }
         else

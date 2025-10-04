@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "BaseCharacter.h"
 #include "InputActionValue.h"
+#include "Components/AttributeComponent.h"
 #include "Interfaces/PickupInterface.h"
 #include "Interfaces/InteractInterface.h"
 #include "Interfaces/UpgradeInterface.h"
@@ -240,4 +241,5 @@ public:
 	FORCEINLINE int32 GetKeysHeld() const { return KeysHeld; }
 	FORCEINLINE void SetKeysHeld(int32 NewKeys) { KeysHeld = NewKeys; }
 	FORCEINLINE AWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
+	FORCEINLINE void ResetHealth() const { if (Attributes) Attributes->ResetHealth(); }
 };

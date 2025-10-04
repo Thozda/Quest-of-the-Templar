@@ -100,6 +100,7 @@ public:
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
 	FORCEINLINE void SetMaxHealth(float NewMaxHealth) { MaxHealth = NewMaxHealth; }
 	FORCEINLINE float GetHealthPercent() const { return Health / MaxHealth; }
+	FORCEINLINE void ResetHealth() { Health = MaxHealth; }
 
 	//
 	//Attack
