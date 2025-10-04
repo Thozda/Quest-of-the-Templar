@@ -8,8 +8,10 @@
 #include "GameFramework/SaveGame.h"
 #include "Items/Item.h"
 #include "Items/Weapons/Weapon.h"
+#include "Volumes/BossArena.h"
 #include "AutoSaveGame.generated.h"
 
+class ABossArena;
 class AEnemy;
 class AItem;
 class AWeapon;
@@ -77,6 +79,12 @@ struct FEnemySaveData
     bool bIsPatrolling;
 
     UPROPERTY(VisibleAnywhere, Category = "Enemy")
+    bool bIsBoss;
+
+    UPROPERTY(VisibleAnywhere, Category = "Enemy")
+    FSoftObjectPath BossArena;
+
+    UPROPERTY(VisibleAnywhere, Category = "Enemy")
     bool bIsDead;
 
     FEnemySaveData()
@@ -96,6 +104,7 @@ struct FEnemySaveData
         ComboResetTimerRemaining = 0.0f;
         bHasPatrolTarget = false;
         bIsPatrolling = false;
+        bIsBoss = false;
         bIsDead = false;
     }
 };

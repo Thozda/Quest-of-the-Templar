@@ -7,6 +7,7 @@
 #include "Characters/Knight.h"
 #include "Components/SaveSystemComponent.h"
 #include "GameMode/SlashGameMode.h"
+#include "Kismet/GameplayStatics.h"
 
 class ASlashGameMode;
 
@@ -16,8 +17,12 @@ ABossArena::ABossArena()
 
 	TriggerBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Trigger Box"));
 	RootComponent = TriggerBox;
+	TriggerBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	TriggerBox->SetGenerateOverlapEvents(true);
+	TriggerBox->SetCollisionObjectType(ECC_WorldDynamic); // Or leave default
 	TriggerBox->SetCollisionResponseToAllChannels(ECR_Ignore);
-	TriggerBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	TriggerBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);          // Character
+	TriggerBox->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);   // Boss
 	
 	Wall1 = CreateDefaultSubobject<UBoxComponent>(TEXT("Wall 1"));
 	Walls.Add(Wall1);
@@ -56,24 +61,71 @@ void ABossArena::Tick(float DeltaTime)
 }
 
 void ABossArena::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor && Cast<AKnight>(OtherActor))
-	{
-		if (Boss) Boss->LookAtPlayer(OtherActor);
+    // Check if boss is invalid or dead
+    if (Boss == nullptr || !IsValid(Boss) || Boss->IsActorBeingDestroyed() || 
+        Boss->GetAttributes() == nullptr || Boss->IsDead())
+    {
+        // Try to find the boss in the world
+        if (!BossClass) return;
+        
+        TArray<AActor*> FoundActors;
+        UGameplayStatics::GetAllActorsOfClass(GetWorld(), BossClass, FoundActors);
 
-		Cast<AKnight>(OtherActor)->PlayBossMusic(BossMusic);
-		
-		ASlashGameMode* GameMode = Cast<ASlashGameMode>(GetWorld()->GetAuthGameMode());
-		if (GameMode && GameMode->GetSaveSystem()) GameMode->GetSaveSystem()->SaveGame();
-		else UE_LOG(LogTemp, Warning, TEXT("Failed to get game mode : Boss Arena"));
-		
-		for (UBoxComponent* Wall : Walls)
-		{
-			if (Wall)
-			{
-				Wall->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-			}
-		}
-	}
+        if (FoundActors.Num() > 0)
+        {
+            Boss = Cast<AEnemy>(FoundActors[0]);
+        }
+
+        // If still no boss, clean up and destroy arena
+        if (!Boss)
+        {
+            if (AKnight* Knight = Cast<AKnight>(OtherActor))
+            {
+                Knight->StopBossMusic();
+            }
+            Destroy();
+            return;
+        }
+        
+        // Boss was found, continue normal flow
+    }
+    
+    // Check if player entered the arena
+    AKnight* Knight = Cast<AKnight>(OtherActor);
+    if (Knight && TriggerBox && BossMusic && Boss)
+    {
+        // Disable trigger box
+        TriggerBox->SetCollisionResponseToAllChannels(ECR_Ignore);
+        TriggerBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        
+        // Boss looks at player
+        Boss->LookAtPlayer(OtherActor);
+
+        // Start boss music
+        Knight->PlayBossMusic(BossMusic);
+        
+        // Save the game
+        if (ASlashGameMode* GameMode = Cast<ASlashGameMode>(GetWorld()->GetAuthGameMode()))
+        {
+            if (GameMode->GetSaveSystem())
+            {
+                GameMode->GetSaveSystem()->SaveGame();
+            }
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Failed to get game mode : Boss Arena"));
+        }
+        
+        // Activate arena walls
+        for (UBoxComponent* Wall : Walls)
+        {
+            if (Wall)
+            {
+                Wall->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+            }
+        }
+    }
 }

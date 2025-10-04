@@ -156,6 +156,16 @@ void AKnight::PlayBossMusic(USoundBase* BossMusic)
 	{
 		BossFightMusic->SetSound(BossMusic);
 		BossFightMusic->Play();
+		UE_LOG(LogTemp, Warning, TEXT("Play Boss MUsic"))
+	}
+}
+
+void AKnight::StopBossMusic()
+{
+	if (BossFightMusic)
+	{
+		BossFightMusic->SetSound(nullptr);
+		BossFightMusic->Stop();
 	}
 }
 
@@ -217,7 +227,14 @@ void AKnight::Dodge(const FInputActionValue& Value)
 void AKnight::DodgeEnd()
 {
 	Super::DodgeEnd();
-	ActionState = EActionState::EAS_Unoccupied;
+	if (IsAlive())
+	{
+		ActionState = EActionState::EAS_Unoccupied;
+	}
+	else
+	{
+		Die();
+	}
 }
 //
 //Interact
@@ -343,6 +360,7 @@ void AKnight::EquipWeapon(AWeapon* Weapon)
 		CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
 	}
 	EquippedWeapon = Weapon;
+	if (GetCharacterMovement()) GetCharacterMovement()->MaxWalkSpeed -= 50.f;
 }
 
 bool AKnight::CanDisarm()
@@ -367,6 +385,7 @@ void AKnight::Disarm()
 		PlayArmMontage(FName("Unequip"));
 		CharacterState = ECharacterState::ECS_UnEquipped;
 		ActionState = EActionState::EAS_EquippingWeapon;
+		if (GetCharacterMovement()) GetCharacterMovement()->MaxWalkSpeed += 50.f;
 	}
 	else if (CanArm())
 	{
@@ -386,6 +405,7 @@ void AKnight::Arm()
 		CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
 	}
 	ActionState = EActionState::EAS_EquippingWeapon;
+	if (GetCharacterMovement()) GetCharacterMovement()->MaxWalkSpeed -= 50.f;
 }
 
 void AKnight::AttachWeaponToBack()

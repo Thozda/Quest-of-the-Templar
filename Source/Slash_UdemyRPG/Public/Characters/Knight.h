@@ -53,11 +53,12 @@ public:
 	virtual void AddKey() override;
 	//Boss
 	void PlayBossMusic(USoundBase* BossMusic);
+	void StopBossMusic();
 
 protected:
 	virtual void BeginPlay() override;
 
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere)
 	EActionState ActionState = EActionState::EAS_Unoccupied;
 
 	UPROPERTY(EditAnywhere)

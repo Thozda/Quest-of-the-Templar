@@ -39,6 +39,9 @@ protected:
 	UPROPERTY(EditAnywhere)
 	USoundBase* BossMusic;
 
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AEnemy> BossClass;
+
 private:	
 	UFUNCTION()
 	void OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);

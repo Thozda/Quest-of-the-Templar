@@ -5,6 +5,7 @@
 
 #include "Characters/Knight.h"
 #include "Components/AttributeComponent.h"
+#include "Components/SphereComponent.h"
 #include "Enemy/Enemy.h"
 #include "Items/Soul.h"
 #include "Items/Treasure.h"
@@ -118,7 +119,7 @@ void USaveSystemComponent::SavePlayerData(UAutoSaveGame* SaveGame)
 	SaveGame->PlayerRotation = Knight->GetActorRotation();
 	SaveGame->PlayerCharacterState = Knight->GetCharacterState();
 	SaveGame->PlayerActionState = Knight->GetActionState();
-	SaveGame->PlayerWeapon = Knight->GetEquippedWeapon()->GetClass();
+	if (Knight->GetEquippedWeapon()) SaveGame->PlayerWeapon = Knight->GetEquippedWeapon()->GetClass();
 	SaveGame->PlayerLevel = KnightAttributes->GetLevel();
 	SaveGame->PlayerHealth = KnightAttributes->GetHealth();
 	SaveGame->PlayerMaxHealth = KnightAttributes->GetMaxHealth();
@@ -186,6 +187,8 @@ void USaveSystemComponent::SaveEnemyData(UAutoSaveGame* SaveGame)
 		EnemyData.ComboResetTimerRemaining = Enemy->GetComboResetTimerRemaining();
 		EnemyData.bIsPatrolling = Enemy->bIsPatrolling();
 		EnemyData.bIsDead = Enemy->IsDead();
+		EnemyData.bIsBoss = Enemy->IsBoss();
+		EnemyData.BossArena = Enemy->GetBossArena();
 
 		SaveGame->EnemyData.Add(EnemyData);
 	}
@@ -250,7 +253,7 @@ void USaveSystemComponent::LoadPlayerData(UAutoSaveGame* LoadedGame)
     
 	// Load character states
 	Knight->SetCharacterState(LoadedGame->PlayerCharacterState);
-	Knight->SetActionState(LoadedGame->PlayerActionState);
+	//Knight->SetActionState(LoadedGame->PlayerActionState);
 
 	//Load Weapon
 	UClass* WeaponClass = nullptr;
@@ -326,6 +329,7 @@ void USaveSystemComponent::LoadEnemyData(UAutoSaveGame* LoadedGame)
             SpawnedEnemy->SetEnemyState(EnemyData.EnemyState);
             SpawnedEnemy->SetCurrentAttackIndex(EnemyData.CurrentAttackIndex);
             SpawnedEnemy->SetPatrolPointIndex(FMath::Clamp(EnemyData.PatrolPointIndex - 1, 0, EnemyData.PatrolPoints.Num() - 1));
+        	
 
         	for (const FSoftObjectPath& Point : EnemyData.PatrolPoints)
         	{
@@ -334,8 +338,8 @@ void USaveSystemComponent::LoadEnemyData(UAutoSaveGame* LoadedGame)
         			SpawnedEnemy->AddPatrolTarget(Loaded);
         		}
         	}
-        	SpawnedEnemy->LoadedPatrolling();
-			UE_LOG(LogTemp, Warning, TEXT("Loading: %d, %d"), SpawnedEnemy->GetPatrolPoints().Num(), EnemyData.PatrolPoints.Num())
+        	
+			//UE_LOG(LogTemp, Warning, TEXT("Loading: %d, %d"), SpawnedEnemy->GetPatrolPoints().Num(), EnemyData.PatrolPoints.Num())
         	
             /* Restore weapon if needed
 			UClass* WeaponClass = nullptr;
@@ -368,6 +372,17 @@ void USaveSystemComponent::LoadEnemyData(UAutoSaveGame* LoadedGame)
             {
                 SpawnedEnemy->SetPatrolTarget(EnemyData.PatrolPointName);
             }
+
+        	SpawnedEnemy->LoadedPatrolling();
+
+        	if (EnemyData.bIsBoss)
+        	{
+        		SpawnedEnemy->SetIsBoss(true);
+        		if (AActor* Loaded = Cast<AActor>(EnemyData.BossArena.ResolveObject()))
+        		{
+					SpawnedEnemy->SetBossArena(Loaded);
+        		}
+        	}
         }
     }
 
@@ -416,6 +431,7 @@ void USaveSystemComponent::LoadTreasureData(UAutoSaveGame* LoadedGame)
 			else if (ASoul* Soul = Cast<ASoul>(SpawnedItem))
 			{
 				Soul->SetSouls(TreasureData.Value);
+				if (Soul->GetSphere()) Soul->GetSphere()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 			}
 		}
 	}

@@ -218,6 +218,9 @@ private:
 
 public:	
 	FORCEINLINE bool IsBoss() const { return bIsBoss; }
+	FORCEINLINE void SetIsBoss(bool value) { bIsBoss = value; }
+	FORCEINLINE AActor* GetBossArena() const { return BossArena; }
+	FORCEINLINE void SetBossArena(AActor* Arena) { BossArena = Arena; }
 	FORCEINLINE UAttributeComponent* GetAttributes() const { return Attributes; }
 	FORCEINLINE AWeapon* GetWeapon() const { return EquippedWeapon; }
 	FORCEINLINE AActor* GetPatrolTarget() const { return PatrolTarget; }

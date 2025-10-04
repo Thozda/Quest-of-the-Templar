@@ -3,17 +3,18 @@
 
 #include "Enemy/Enemy.h"
 #include "AIController.h"
+#include "Characters/Knight.h"
 
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/AttributeComponent.h"
+#include "Components/SaveSystemComponent.h"
 #include "Components/SphereComponent.h"
-#include "Engine/TargetPoint.h"
 #include "HUD/HealthBarComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameMode/SlashGameMode.h"
 #include "Perception/PawnSensingComponent.h"
 #include "Items/Weapons/Weapon.h"
 #include "Items/Soul.h"
-#include "Kismet/GameplayStatics.h"
 
 AEnemy::AEnemy()
 {
@@ -23,7 +24,7 @@ AEnemy::AEnemy()
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetGenerateOverlapEvents(true);
-
+	
 	HealthBarWidget = CreateDefaultSubobject<UHealthBarComponent>(TEXT("Health Bar"));
 	HealthBarWidget->SetupAttachment(GetRootComponent());
 
@@ -114,6 +115,10 @@ void AEnemy::LoadedPatrolling()
 			PatrolTarget = PatrolTargets[PatrolPointIndex];
 			MoveToTarget(PatrolTarget);
 		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("No Patrol Targets"))
+		}
 	}
 }
 
@@ -140,7 +145,7 @@ void AEnemy::CheckPatrolTarget()
 		GetWorldTimerManager().SetTimer(PatrolTimer, this, &AEnemy::PatrolTimerFinished,
 			FMath::RandRange(PatrolWaitMin, PatrolWaitMax));
 	}
-	else
+	else if (EnemyState != EEnemyState::EES_HitReaction && EnemyState != EEnemyState::EES_Dead)
 	{
 		StartPatrolling();
 	}
@@ -247,12 +252,12 @@ void AEnemy::MoveToTarget(AActor* Target)
 
 bool AEnemy::NewPatrolTarget()
 {
-	UE_LOG(LogTemp, Warning, TEXT("%d"), PatrolTargets.Num())
+	//UE_LOG(LogTemp, Warning, TEXT("%d"), PatrolTargets.Num())
 	if (PatrolTargets.Num() <= 0) return false;
 
 	PatrolPointIndex = (PatrolPointIndex + 1) % PatrolTargets.Num();
 	PatrolTarget = PatrolTargets[PatrolPointIndex];
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *PatrolTarget->GetName())
+	//UE_LOG(LogTemp, Warning, TEXT("%s"), *PatrolTarget->GetName())
 	return true;
 }
 
@@ -358,6 +363,8 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 	GetWorldTimerManager().ClearTimer(AttackTimer);
 	StopAttackMontage();
 	SetWeaponCanDamage(false);
+	if (!IsDead()) EnemyState = EEnemyState::EES_HitReaction;
+	else Cast<AKnight>(Hitter)->StopBossMusic();
 	//if (IsInsideAttackRadius() && !IsDead()) StartAttackTimer();
 }
 
@@ -381,7 +388,13 @@ void AEnemy::Die_Implementation()
 	SetWeaponCanDamage(false);
 	SpawnSoul();
 	SpawnKey();
-	if (BossArena) BossArena->Destroy();
+	if (BossArena)
+	{
+		BossArena->Destroy();
+		ASlashGameMode* GameMode = Cast<ASlashGameMode>(GetWorld()->GetAuthGameMode());
+		if (GameMode && GameMode->GetSaveSystem()) GameMode->GetSaveSystem()->SaveGame();
+		else UE_LOG(LogTemp, Warning, TEXT("Failed to get game mode : Enemy"));
+	}
 }
 
 void AEnemy::Destroyed()
