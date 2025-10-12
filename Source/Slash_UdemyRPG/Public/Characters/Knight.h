@@ -55,6 +55,8 @@ public:
 	//Boss
 	void PlayBossMusic(USoundBase* BossMusic);
 	void StopBossMusic();
+	void ResetHealth();
+	void WinScreen();
 
 protected:
 	virtual void BeginPlay() override;
@@ -143,6 +145,7 @@ private:
 	//Endgame
 	//
 	void InitialiseTeleportTarget();
+	void TeleportPlayer();
 	
 	UPROPERTY(VisibleAnywhere, Category = "Endgame")
 	int32 KeysHeld;
@@ -170,6 +173,8 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	UAudioComponent* BossFightMusic;
+
+	float StartingWalkSpeed = 500.f;
 
 	//
 	//Audio
@@ -241,5 +246,4 @@ public:
 	FORCEINLINE int32 GetKeysHeld() const { return KeysHeld; }
 	FORCEINLINE void SetKeysHeld(int32 NewKeys) { KeysHeld = NewKeys; }
 	FORCEINLINE AWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
-	FORCEINLINE void ResetHealth() const { if (Attributes) Attributes->ResetHealth(); }
 };

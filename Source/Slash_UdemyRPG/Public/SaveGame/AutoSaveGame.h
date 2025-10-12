@@ -11,6 +11,7 @@
 #include "Volumes/BossArena.h"
 #include "AutoSaveGame.generated.h"
 
+class ABreakableActor;
 class ABossArena;
 class AEnemy;
 class AItem;
@@ -221,6 +222,8 @@ public:
     UPROPERTY(VisibleAnywhere, Category = "Treasure")
     TArray<FTreasureSaveData> TreasureData;
 
+    UPROPERTY(VisibleAnywhere, Category = "Treasure")
+    TArray<FSoftObjectPath> Breakables;
     //
     // Level/World Data (optional but useful)
     //

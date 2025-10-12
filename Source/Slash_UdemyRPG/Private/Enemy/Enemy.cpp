@@ -305,7 +305,7 @@ bool AEnemy::CanAttack()
 void AEnemy::Attack()
 {
 	if (BaseAttack(PossibleAttacks, CurrentAttackIndex, ComboResetTimerHandle, ComboResetTime,
-		[this]() { CurrentAttackIndex = 0; } ))
+		[this]() { CurrentAttackIndex = 0; }, bIsBoss))
 	{
 		EnemyState = EEnemyState::EES_Engaged;
 
@@ -358,18 +358,13 @@ void AEnemy::HandleDamage(float DamageAmount)
 void AEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 {
 	Super::GetHit_Implementation(ImpactPoint, Hitter);
+	MemberHitter = Hitter;
 	if (!IsDead()) SetHealthBarVisibility(true);
 	GetWorldTimerManager().ClearTimer(PatrolTimer);
 	GetWorldTimerManager().ClearTimer(AttackTimer);
 	StopAttackMontage();
 	SetWeaponCanDamage(false);
 	if (!IsDead()) EnemyState = EEnemyState::EES_HitReaction;
-	else
-	{
-		Cast<AKnight>(Hitter)->StopBossMusic();
-		Cast<AKnight>(Hitter)->ResetHealth();
-	}
-	//if (IsInsideAttackRadius() && !IsDead()) StartAttackTimer();
 }
 
 void AEnemy::HitReactEnd()
@@ -392,12 +387,35 @@ void AEnemy::Die_Implementation()
 	SetWeaponCanDamage(false);
 	SpawnSoul();
 	SpawnKey();
+	
 	if (BossArena)
 	{
 		BossArena->Destroy();
+		
+		if (MemberHitter)
+		{
+			Cast<AKnight>(MemberHitter)->StopBossMusic();
+			Cast<AKnight>(MemberHitter)->ResetHealth();
+			if (bIsFinalBoss) Cast<AKnight>(MemberHitter)->WinScreen();
+		}
+		
+		//Save Game
 		ASlashGameMode* GameMode = Cast<ASlashGameMode>(GetWorld()->GetAuthGameMode());
 		if (GameMode && GameMode->GetSaveSystem()) GameMode->GetSaveSystem()->SaveGame();
 		else UE_LOG(LogTemp, Warning, TEXT("Failed to get game mode : Enemy"));
+	}
+	else
+	{
+		int32 Rand = FMath::RandRange(1, 10);
+		if (Rand == 1)
+		{
+			UWorld* World = GetWorld();
+			if (World && EquippedWeapon)
+			{
+				EquippedWeapon->Destroy();
+				World->SpawnActor<AWeapon>(EquippedWeapon->GetClass(), GetActorLocation(), GetActorRotation());
+			}
+		}
 	}
 }
 

@@ -4,6 +4,7 @@
 #include "GameMode/SlashGameMode.h"
 
 #include "Components/SaveSystemComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 ASlashGameMode::ASlashGameMode()
 {
@@ -18,4 +19,13 @@ void ASlashGameMode::BeginPlay()
 	{
 		SaveSystemComponent->LoadGame();
 	}
+
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (PC)
+	{
+		PC->bShowMouseCursor = true;
+	}
+
+	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 0.0f);
+
 }

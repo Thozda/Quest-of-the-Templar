@@ -33,7 +33,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 }
 
 bool ABaseCharacter::BaseAttack(TArray<FName>& PossibleAttacks, int32& CurrentAttackIndex,
-	FTimerHandle& ComboResetTimerHandle, float ComboResetTime, TFunction<void()> ResetFunc)
+	FTimerHandle& ComboResetTimerHandle, float ComboResetTime, TFunction<void()> ResetFunc, bool bIsBoss)
 {
 	if (PossibleAttacks.Num() <= 0) return false;
 
@@ -44,8 +44,8 @@ bool ABaseCharacter::BaseAttack(TArray<FName>& PossibleAttacks, int32& CurrentAt
 	}
 
 	FName SelectedAttack = PossibleAttacks[CurrentAttackIndex];
-	PlayAttackMontage(SelectedAttack);
-
+	PlayAttackMontage(SelectedAttack, bIsBoss);
+	
 	CurrentAttackIndex = (CurrentAttackIndex + 1) % PossibleAttacks.Num();
 
 	GetWorldTimerManager().ClearTimer(ComboResetTimerHandle);
@@ -86,11 +86,32 @@ int32 ABaseCharacter::PlayRandomMontageSection(UAnimMontage* Montage, const TArr
 	return Selection;
 }
 
-void ABaseCharacter::PlayAttackMontage(const FName& Selection)
+void ABaseCharacter::PlayAttackMontage(const FName& Selection, bool bIsBoss)
 {
-	if (AttackMontageSections.Num() <= 0) return;
+	if (AttackMontageSections.Num() <= 0 || AttackMontage == nullptr) return;
 
 	PlayMontageSection(AttackMontage, Selection);
+
+	if (bIsBoss)
+	{
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance == nullptr) return;
+		AnimInstance->Montage_SetPlayRate(AttackMontage, 0.3f);
+
+		GetWorldTimerManager().ClearTimer(AttackSpeedTimerHandle);
+		GetWorldTimerManager().SetTimer(AttackSpeedTimerHandle, this, &ABaseCharacter::ResetAttackSpeed,
+			0.5f, false);
+	}
+}
+
+void ABaseCharacter::ResetAttackSpeed()
+{
+	if (!AttackMontage) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (!AnimInstance) return;
+
+	AnimInstance->Montage_SetPlayRate(AttackMontage, 1.0f);
 }
 
 void ABaseCharacter::StopAttackMontage()

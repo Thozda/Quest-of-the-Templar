@@ -106,7 +106,7 @@ void ABossArena::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
         // Start boss music
         Knight->PlayBossMusic(BossMusic);
         
-        // Save the game
+        /* Save the game
         if (ASlashGameMode* GameMode = Cast<ASlashGameMode>(GetWorld()->GetAuthGameMode()))
         {
             if (GameMode->GetSaveSystem())
@@ -117,7 +117,7 @@ void ABossArena::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
         else
         {
             UE_LOG(LogTemp, Warning, TEXT("Failed to get game mode : Boss Arena"));
-        }
+        }*/
         
         // Activate arena walls
         for (UBoxComponent* Wall : Walls)

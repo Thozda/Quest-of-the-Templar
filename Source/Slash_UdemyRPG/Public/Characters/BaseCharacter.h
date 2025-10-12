@@ -31,7 +31,7 @@ protected:
 	//
 	virtual bool CanAttack();
 	virtual bool BaseAttack(TArray<FName>& PossibleAttacks, int32& CurrentAttackIndex,
-		FTimerHandle& ComboResetTimerHandle, float ComboResetTime, TFunction<void()> ResetFunc);
+		FTimerHandle& ComboResetTimerHandle, float ComboResetTime, TFunction<void()> ResetFunc, bool bIsBoss);
 	virtual void LoseInterest();
 
 	UFUNCTION(BlueprintCallable)
@@ -114,7 +114,8 @@ private:
 	//Anim Montages
 	//
 	void PlayMontageSection(UAnimMontage* Montage, const FName& SectionName);
-	virtual void PlayAttackMontage(const FName& Selection);
+	virtual void PlayAttackMontage(const FName& Selection, bool bIsBoss);
+	void ResetAttackSpeed();
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* AttackMontage;
@@ -127,7 +128,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TArray<FName> AttackMontageSections;
-
+	
+	FTimerHandle AttackSpeedTimerHandle;
+	
 	//
 	//VFX
 	//

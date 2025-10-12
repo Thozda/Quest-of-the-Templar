@@ -39,6 +39,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bIsFinalBoss = false;
 
 	//
 	//Attacks
@@ -153,6 +156,9 @@ private:
 	void StartAttackTimer();
 	virtual void Destroyed() override;
 
+	UPROPERTY()
+	AActor* MemberHitter;
+	
 	UPROPERTY(EditAnywhere, Category = Combat)
 	double CombatRadius = 2000.f;
 

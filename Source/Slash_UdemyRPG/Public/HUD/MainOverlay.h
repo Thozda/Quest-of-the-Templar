@@ -6,6 +6,8 @@
 #include "Blueprint/UserWidget.h"
 #include "MainOverlay.generated.h"
 
+class UImage;
+class UButton;
 class UProgressBar;
 class UTextBlock;
 
@@ -23,7 +25,35 @@ public:
 	void SetGoldText(int32 Quantity);
 	void SetSoulsText(int32 Quantity);
 
+	UFUNCTION(BlueprintCallable)
+	void PlayButton();
+	
+	void DungeonTransition();
+	void Dead();
+	void Complete();
+
+protected:
+	UPROPERTY(meta = (BindWidgetAnim), Transient)
+	UWidgetAnimation* FadeToBlackAnim;
+	
+	UPROPERTY(meta = (BindWidgetAnim), Transient)
+	UWidgetAnimation* FadeFromBlackAnim;
+	
+	UPROPERTY(meta = (BindWidgetAnim), Transient)
+	UWidgetAnimation* TitleInAnim;
+	
+	UPROPERTY(meta = (BindWidgetAnim), Transient)
+	UWidgetAnimation* TitleOutAnim;
+	
 private:
+	void FadeToBlack();
+	void FadeFromBlack();
+	void TitleIn();
+	void TitleOut();
+	void ShowRetry();
+	void ShowRestart();
+	void WinText();
+
 	UPROPERTY(meta = (BindWidget))
 	UProgressBar* HealthBar;
 
@@ -35,5 +65,23 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* Souls;
+
+	UPROPERTY(meta = (BindWidget))
+	UImage* BlackScreen;
+	
+	UPROPERTY(meta = (BindWidget))
+	UImage* TitleScreen;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* Play;
+	
+	UPROPERTY(meta = (BindWidget))
+	UButton* Retry;
+	
+	UPROPERTY(meta = (BindWidget))
+	UButton* Restart;
+	
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* WinTextBlock;
 
 };

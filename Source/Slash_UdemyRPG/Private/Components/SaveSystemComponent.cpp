@@ -3,6 +3,7 @@
 
 #include "Components/SaveSystemComponent.h"
 
+#include "Breakable/BreakableActor.h"
 #include "Characters/Knight.h"
 #include "Components/AttributeComponent.h"
 #include "Components/SphereComponent.h"
@@ -234,6 +235,18 @@ void USaveSystemComponent::SaveTreasureData(UAutoSaveGame* SaveGame)
 	}
 	
 	UE_LOG(LogTemp, Warning, TEXT("Saved %d items"), SaveGame->TreasureData.Num());
+
+	TArray<AActor*> DestructiblesFound;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABreakableActor::StaticClass(), DestructiblesFound);
+
+	for (AActor* Actor : DestructiblesFound)
+	{
+		ABreakableActor* BreakableActor = Cast<ABreakableActor>(Actor);
+		if (BreakableActor && !BreakableActor->GetIsBroken())
+		{
+			SaveGame->Breakables.Add(BreakableActor);
+		}
+	}
 }
 
 void USaveSystemComponent::LoadPlayerData(UAutoSaveGame* LoadedGame)
@@ -437,6 +450,32 @@ void USaveSystemComponent::LoadTreasureData(UAutoSaveGame* LoadedGame)
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("Loaded %d items"), LoadedGame->TreasureData.Num());
+
+	TArray<AActor*> DestructiblesFound;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABreakableActor::StaticClass(), DestructiblesFound);
+
+	for (AActor* Actor : DestructiblesFound)
+	{
+		ABreakableActor* BreakableActor = Cast<ABreakableActor>(Actor);
+		if (!BreakableActor) continue;
+
+		bool bFoundInSaved = false;
+
+		for (const FSoftObjectPath& Object : LoadedGame->Breakables)
+		{
+			ABreakableActor* SavedBreakable = Cast<ABreakableActor>(Object.ResolveObject());
+			if (SavedBreakable && SavedBreakable == BreakableActor)
+			{
+				bFoundInSaved = true;
+				break;
+			}
+		}
+
+		if (!bFoundInSaved)
+		{
+			BreakableActor->Destroy();
+		}
+	}
 }
 
 void USaveSystemComponent::ClearEnemiesAndTreasure()

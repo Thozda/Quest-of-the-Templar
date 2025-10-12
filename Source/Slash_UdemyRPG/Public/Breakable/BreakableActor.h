@@ -62,4 +62,7 @@ private:
 
 	bool bBroken = false;
 	bool bHit = false;
+
+public:
+	FORCEINLINE bool GetIsBroken() const { return bBroken; }
 };

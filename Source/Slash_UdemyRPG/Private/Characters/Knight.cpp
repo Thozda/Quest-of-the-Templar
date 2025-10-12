@@ -19,6 +19,8 @@
 #include "Volumes/Campfire.h"
 #include "Volumes/MountainDoor.h"
 #include "TimerManager.h"
+#include "Components/SaveSystemComponent.h"
+#include "GameMode/SlashGameMode.h"
 
 AKnight::AKnight()
 {
@@ -253,17 +255,34 @@ void AKnight::Interact(const FInputActionValue& Value)
 	else if (Cast<AWeapon>(OverlappingActor))
 	{
 		AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingActor);
-		if (EquippedWeapon) EquippedWeapon->Destroy();
+		if (EquippedWeapon)
+		{
+			UWorld* World = GetWorld();
+			if (World) World->SpawnActor<AWeapon>(EquippedWeapon->GetClass(), GetActorLocation(), GetActorRotation());
+			EquippedWeapon->Destroy();
+		}
 		EquipWeapon(OverlappingWeapon);
 	}
-	else if (Cast<AMountainDoor>(OverlappingActor) && KeysHeld >= KeysRequired && TeleportTarget && GetController() && WindAmbience)
+	else if (Cast<AMountainDoor>(OverlappingActor) && KeysHeld >= KeysRequired && TeleportTarget && GetController() && WindAmbience && Overlay)
 	{
-		SetActorLocationAndRotation(TeleportTarget->GetActorLocation(), TeleportTarget->GetActorRotation());
-		GetController()->SetControlRotation(GetActorRotation());
-		OverlappingActor = nullptr;
-		WindAmbience->Stop();
-		GetWorldTimerManager().ClearTimer(WindAmbienceTimer);
+		Overlay->DungeonTransition();
+		FTimerHandle TimerHandle;
+		GetWorldTimerManager().SetTimer(TimerHandle, this, &AKnight::TeleportPlayer, 0.25f);
 	}
+}
+
+void AKnight::TeleportPlayer()
+{
+	SetActorLocationAndRotation(TeleportTarget->GetActorLocation(), TeleportTarget->GetActorRotation());
+	GetController()->SetControlRotation(GetActorRotation());
+	OverlappingActor = nullptr;
+	WindAmbience->Stop();
+	GetWorldTimerManager().ClearTimer(WindAmbienceTimer);
+
+	//Save Game
+	ASlashGameMode* GameMode = Cast<ASlashGameMode>(GetWorld()->GetAuthGameMode());
+	if (GameMode && GameMode->GetSaveSystem()) GameMode->GetSaveSystem()->SaveGame();
+	else UE_LOG(LogTemp, Warning, TEXT("Failed to get game mode : Player"));
 }
 
 void AKnight::SetOverlappingActor(AActor* Actor)
@@ -313,6 +332,12 @@ FString AKnight::CampfireText()
 	return FString("");
 }
 
+void AKnight::ResetHealth()
+{
+	if (Attributes) Attributes->ResetHealth();
+	if (Overlay) Overlay->SetHealthBarPercent(100);
+}
+
 //
 //Pickup
 //
@@ -360,7 +385,7 @@ void AKnight::EquipWeapon(AWeapon* Weapon)
 		CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
 	}
 	EquippedWeapon = Weapon;
-	if (GetCharacterMovement()) GetCharacterMovement()->MaxWalkSpeed -= 50.f;
+	if (GetCharacterMovement()) GetCharacterMovement()->MaxWalkSpeed = StartingWalkSpeed - 50.f;
 }
 
 bool AKnight::CanDisarm()
@@ -385,7 +410,7 @@ void AKnight::Disarm()
 		PlayArmMontage(FName("Unequip"));
 		CharacterState = ECharacterState::ECS_UnEquipped;
 		ActionState = EActionState::EAS_EquippingWeapon;
-		if (GetCharacterMovement()) GetCharacterMovement()->MaxWalkSpeed += 50.f;
+		if (GetCharacterMovement()) GetCharacterMovement()->MaxWalkSpeed = StartingWalkSpeed;
 	}
 	else if (CanArm())
 	{
@@ -446,7 +471,8 @@ void AKnight::LightAttack(const FInputActionValue& Value)
 {
 	if (Attributes && Attributes->GetStamina() < Attributes->GetLightAttackCost()) return;
 	if (CanAttack() && EquippedWeapon && Attributes && BaseAttack(PossibleLightAttacks, CurrentLightAttackIndex,
-		LightComboResetTimerHandle, LightComboResetTime, [this]() { CurrentLightAttackIndex = 0; }))
+		LightComboResetTimerHandle, LightComboResetTime, [this]() { CurrentLightAttackIndex = 0; },
+		false))
 	{
 		ActionState = EActionState::EAS_Attacking;
 		float Damage = EquippedWeapon->GetBaseDamage() * Attributes->GetLightDamageMultiplier();
@@ -459,7 +485,8 @@ void AKnight::HeavyAttack(const FInputActionValue& Value)
 {
 	if (Attributes && Attributes->GetStamina() < Attributes->GetHeavyAttackCost()) return;
 	if (CanAttack() && EquippedWeapon && Attributes && BaseAttack(PossibleHeavyAttacks, CurrentHeavyAttackIndex,
-		HeavyComboResetTimerHandle, HeavyComboResetTime, [this]() { CurrentHeavyAttackIndex = 0; }))
+		HeavyComboResetTimerHandle, HeavyComboResetTime, [this]() { CurrentHeavyAttackIndex = 0; },
+		false))
 	{
 		ActionState = EActionState::EAS_Attacking;
 		float Damage = EquippedWeapon->GetBaseDamage() * Attributes->GetHeavyDamageMultiplier();
@@ -522,6 +549,7 @@ void AKnight::Die_Implementation()
 	Super::Die_Implementation();
 
 	ActionState = EActionState::EAS_Dead;
+	if (Overlay) Overlay->Dead();
 }
 
 int32 AKnight::PlayDeathMontage()
@@ -535,4 +563,9 @@ int32 AKnight::PlayDeathMontage()
 	}
 
 	return Selection;
+}
+
+void AKnight::WinScreen()
+{
+	if (Overlay) Overlay->Complete();
 }
